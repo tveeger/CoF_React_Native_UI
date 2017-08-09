@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
-import { Button, Image, View, Text, TextInput, StyleSheet } from 'react-native';
+import { Button, Image, View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import Connector from './Connector.js';
 
 import HttpProvider from 'ethjs-provider-http';
 import EthRPC from 'ethjs-rpc';
 import Unit from 'ethjs-unit';
 import Util from 'ethjs-util';
-//const provider = 'http://192.168.1.7:8545';
-//const provider = 'https://rinkeby.infura.io/';
+import Websocket from './Websocket.js';
 const ethRPC = new EthRPC(new HttpProvider(testnetProvider));
+const extractKey = ({id}) => id;
 
 class BuyScreen extends React.Component {
   static navigationOptions = {
@@ -20,14 +20,36 @@ class BuyScreen extends React.Component {
     super(props);
 
     this.state = {
+      connected: false,
       euroInputAmount: '',
+      incoming: '',
       submitMessage: '',
       coinbase: '',
       tokenAddress: '',
-      coinbaseBalance: '',
       tokenBalance: '',
       submitCode: '',
+      confirmMessage: '',
+      posts: [],
+      postsAmount: 0
     };
+
+    //this.socket = new WebSocket('ws://45.32.186.169:28475');
+    this.socket = new WebSocket('ws://echo.websocket.org'); //testing
+        this.socket.onopen = () => {
+          this.setState({connected:true})
+        };
+        this.socket.onmessage = (e) => {
+          console.log(e.data);
+          this.setState({incoming:e.data});
+        };
+        this.socket.onerror = (e) => {
+          console.log(e.message);
+        };
+        this.socket.onclose = (e) => {
+          this.setState({connected:false})
+          console.log(e.code, e.reason);
+        };
+        this.emit = this.emit.bind(this);
 
   }
 
@@ -40,34 +62,46 @@ class BuyScreen extends React.Component {
 
     ethRPC.sendAsync({
       method: 'eth_getBalance',
-      params: [coinbase, 'latest'],
-    }, (err, coinbaseBalance) => {
-        var balEth = Unit.fromWei(coinbaseBalance, 'ether');
-        self.setState({coinbaseBalance: balEth.toString() + ' ETH'});
-    });
-
-    ethRPC.sendAsync({
-      method: 'eth_getBalance',
       params: [tokenAddress, 'latest'],
     }, (err, tokenBalance) => {
         var balTokenEth = Unit.fromWei(tokenBalance, 'ether');
-        self.setState({tokenBalance: balTokenEth.toString() + ' ETH'});
+        self.setState({tokenBalance: balTokenEth.toString() });
     });
 
   }
+    
+  renderItem = ({item}) => {
+    return (
+      <Text style={styles.row}>{item.payload}</Text>
+    )
+  }
 
   emit() {
-    const self = this;
-    let myEuros = Util.intToHex(self.state.euroInputAmount);
+    if( this.state.connected ) {
+      let posts = this.state.posts;
+      let postsAmount = posts.length + 1;
 
-    ethRPC.sendAsync({
-      method: 'web3_sha3',
-      params: [myEuros]
-    }, (err, loadValue) => {
-      self.setState({submitCode: loadValue.toString()});
-    });
-    self.setState({submitMessage: 'Transfer the exact amount of Euros to IBAN 123456789 and add the following code you see below in the comment area.'});
-    self.setState({euroInputAmount: ''});
+      let myEuros = Util.intToHex(this.state.euroInputAmount);
+      let submitCode = Math.random().toString(16).slice(2);
+      this.setState({submitCode: submitCode.toString()});
+      /*
+      ethRPC.sendAsync({
+        method: 'web3_sha3',
+        params: [myEuros]
+      }, (err, loadValue) => {
+        //this.setState({submitCode: loadValue.toString()});  
+      });
+      */
+      this.setState({confirmMessage: '{amount: "' + myEuros + '", code: "' + submitCode + '", sender:"' + daCoinbase + '"}'});
+      this.socket.send(this.state.confirmMessage);
+      
+      posts = this.state.posts.slice();
+      posts.push({'id': postsAmount, 'payload': this.state.confirmMessage});
+      this.setState({ posts: posts });
+
+      this.setState({submitMessage: 'Transfer the exact amount of Euros to IBAN 123456789 and add the following code you see below in the comment area.'});
+      this.setState({euroInputAmount: ''});
+    }
   }
 
   render() {
@@ -76,8 +110,6 @@ class BuyScreen extends React.Component {
           <View style={styles.container}>
             <Text style={styles.baseText}>
               <Text style={styles.header_h4}>Transfer some Euros for DET tokens {'\n'}{'\n'}</Text>
-              <Text style={styles.prompt}>Balance Eth account: </Text>
-              <Text>{this.state.coinbaseBalance}{'\n'}</Text>
               <Text style={styles.prompt}>DET Balance: </Text>
               <Text>{this.state.tokenBalance}{'\n'}{'\n'}</Text>
               <Text>Set the amount of Euros</Text>
@@ -101,6 +133,15 @@ class BuyScreen extends React.Component {
             />
             <Text style={styles.row}>{this.state.submitMessage}</Text>
             <Text style={styles.submitCode}>{this.state.submitCode}</Text>
+            <Text style={styles.prompt}>Last submits</Text>
+            <Text style={styles.row}>{this.state.confirmMessage}</Text>
+            <Text style={styles.prompt}>Recent submits</Text>
+            <FlatList
+                style={styles.postItem}
+                data={this.state.posts}
+                renderItem={this.renderItem}
+                keyExtractor={extractKey}
+               />
         </View>
       );
   }
@@ -142,6 +183,9 @@ const styles = StyleSheet.create({
     color: '#8192A2',
     padding: 10,
     fontSize: 20,
+  },
+  postItem: {
+    paddingTop: 4,
   },
 });
 
