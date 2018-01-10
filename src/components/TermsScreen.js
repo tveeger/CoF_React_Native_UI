@@ -1,14 +1,22 @@
 import React, { Component } from 'react';
 import { Button, Image, View, Text, StyleSheet } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 class TermsScreen extends React.Component {
   static navigationOptions = {
     title: 'Terms and Conditions',
+
   };
     render() {
         return (
           <View style={styles.container}>
-            <Text style={styles.header_h4}>Read more...</Text>
+            <Text style={styles.baseText}>
+              <Ionicons name={'ios-radio-outline'} size={26} style={styles.icon} />
+              <Text style={styles.header_h4}> Read more...{'\n'}</Text>
+              <Text>
+                Take notice of our general terms ....
+              </Text>
+            </Text>
           </View>
         );
     }
@@ -21,9 +29,21 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   header_h4: {
-    color: '#8192A2',
+    color: '#2D4866',
     fontSize: 20,
     padding: 10,
+  },
+  baseText: {
+    textAlign: 'left',
+    color: '#999999',
+    marginBottom: 5,
+  },
+  prompt: {
+    color: '#BCB3A2',
+  },
+  icon: {
+    color: '#2D4866',
+    fontSize: 30,
   },
 });
 

@@ -1,115 +1,97 @@
-//TabNavigator: https://reactnavigation.org/docs/navigators/tab
-
 import React, { Component } from 'react';
-import { Button, Image, View, Text, StyleSheet } from 'react-native';
-import { StackNavigator, TabNavigator } from "react-navigation";
-import AboutScreen from './AboutScreen.js';
-import TermsScreen from './TermsScreen.js';
-import CharitiesScreen from './CharitiesScreen.js';
-import BuyScreen from './BuyScreen.js';
-import DonateScreen from './DonateScreen.js';
-import ChatScreen from './ChatScreen.js';
-import TokenInfo from './TokenInfo.js';
-
-
-import Icon from 'react-native-vector-icons/FontAwesome';
-const rocket = (<Icon name="rocket" size={30} color="#900" />);
-const android = (<Icon name="android" size={30} color="#900" />);
-const google = (<Icon name="google" size={30} color="#900" />);
+import { Button, Image, View, ScrollView, Text, StyleSheet, AsyncStorage } from 'react-native';
+import Connector from './Connector.js';
+import ethers from 'ethers';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { NavigationActions } from 'react-navigation';
 
 class HomeScreen extends React.Component {
   static navigationOptions = {
-    title: 'Chains of Freedom',
-    tabBarLabel: 'Home',
-  };
+	title: 'Home',
+	tabBarLabel: 'Home',
+	tabBarIcon: ({ tintColor }) => (
+		<Image
+			source={require('../img/beeldmerk_30x32_darkblue.png')}
+			style={[styles.tabIcon, {tintColor: tintColor}]}
+		/>
+		),
+	};
+
+	constructor(props) {
+		super(props);
+
+		this.state = {
+			hasWallet: false,
+			networkName: '',
+			walletAddress: '',
+			message: '',
+		};
+	}
+
+	componentWillMount() {
+		let self = this;
+		//wallet.provider = etherscanProvider;
+		self.setState({networkName: wallet.provider.name});
+		self.setState({walletAddress: wallet.address});
+	}
+
+
   render() {
-    const {navigate} = this.props.navigation;
-      return (
-        <View style={styles.container}>
-          
-          <TokenInfo/>
-          <Button
-            onPress={() => navigate('About')}
-            title="About CoF"
-            color='#BCB3A2'
-            icon={{
-              name: 'android',
-              color: styles.roundButton.backgroundColor
-          }}
-          borderRadius={styles.roundButton.borderRadius}
-        />
-        <Button
-          onPress={() => navigate('Terms')}
-          title="Terms"
-          color='#BCB3A2'
-          icon={{
-            name: 'rocket',
-            color: styles.roundButton.backgroundColor
-          }}
-          borderRadius={styles.roundButton.borderRadius}
-        />
-        <Button
-          onPress={() => navigate('Charities')}
-          title="Charities"
-          color='#BCB3A2'
-          icon={{
-            name: 'google',
-            color: styles.roundButton.backgroundColor
-          }}
-          borderRadius={styles.roundButton.borderRadius}
-        />
-        <Text> </Text>
-        
-      </View>
-      );
+    return (
+	<ScrollView style={styles.container}>
+		<View style={styles.logoSpace}>
+          <Image source={require('../img/logo_dblue_transp_210x117.png')} style={{width: 210, height: 117}} />
+        </View>
+		<Text style={styles.baseText}>
+			<Text style={styles.errorText}>{this.state.message}{'\n'}{'\n'}</Text>
+			<Text style={styles.header_h4}>Wallet {'\n'}</Text>
+			<Text style={styles.prompt}>Network: </Text>
+			<Text>{this.state.networkName}{'\n'}</Text>
+			<Text style={styles.prompt}>Address: </Text>
+			<Text>{this.state.walletAddress}{'\n'}</Text>
+			<Text>{this.state.message}</Text>
+		</Text>
+		
+		</ScrollView>
+    );
   }
-}
-
-const MainScreenNavigator = TabNavigator({
-  Home: { screen: HomeScreen },
-  Buy: { screen: BuyScreen },
-  Donate: { screen: DonateScreen },
-  Chat: { screen: ChatScreen } }, {
-  tabBarOptions: {
-    activeTintColor: '#666',
-    inactiveTintColor: '#DDD',
-      labelStyle: {
-        fontSize: 14,
-      },
-      style: {
-        backgroundColor: '#8192A2',
-      }
-    }
-});
-
-const DaStackNavigator = StackNavigator({
-  Main: { screen: MainScreenNavigator },
-  About: { screen: AboutScreen },
-  Terms: { screen: TermsScreen },
-  Charities: { screen: CharitiesScreen } }, {
-    navigationOptions: {
-      headerTintColor: '#8192A2',
-      headerStyle: {backgroundColor: '#DDD'}
-    }
-  
-});
+};
 
 const styles = StyleSheet.create({
-  container: {
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingTop: 10,
-    backgroundColor: 'whitesmoke',
-  },
-  icon: {
-    width: 26,
-    height: 26,
-  },
-  roundButton: {
-    borderRadius:30,
-    backgroundColor: 'green'
+	container: {
+		marginTop: 10,
+		paddingLeft: 10,
+		paddingRight: 10,
+		paddingTop: 10,
+	},
+	header_h4: {
+		color: '#2D4866',
+		fontSize: 20,
+		padding: 10,
+	},
+	baseText: {
+		textAlign: 'left',
+		color: '#999999',
+		marginBottom: 5,
+		marginLeft: 10,
+	},
+	logoSpace: {
+		flex: 1,
+		alignItems: 'center',
+		paddingTop: 40,
+		paddingBottom: 30
+	},
+	prompt: {
+		color: '#BCB3A2',
+	},
+	errorText: {
+		marginTop: 10,
+		color: 'red'
+	},
+	tabIcon: {
+		width: 30,
+		height: 32,
   },
 });
 
-
-export default DaStackNavigator;
+export default HomeScreen;
