@@ -231,12 +231,6 @@ class SendToken extends React.Component {
 				</TouchableHighlight>
 			</View>
 		</Modal>
-		<View style={styles.container}>
-			<TextInput 
-				style={styles.input} 
-				placeholder = "tekst hiero"
-			/>
-		</View>
 		<Text style={styles.baseText}>
 			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
 			<Text style={styles.header_h4}> Send Tokens{'\n'}{'\n'}</Text>
