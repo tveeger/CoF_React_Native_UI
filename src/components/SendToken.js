@@ -5,6 +5,7 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BirdlandToken from '../contracts/BirdlandToken.json';
+import TextinputTest from './TextinputTest.js';
 wallet = '';
 
 class SendToken extends React.Component {
@@ -189,14 +190,16 @@ class SendToken extends React.Component {
 				onRefresh={this._onRefresh.bind(this)}
 			/>
 		}>
+
 		<Modal animationType = {"slide"} transparent = {false}
 			visible = {this.state.modalVisible}
 			onRequestClose = {() => { console.log("Modal has been closed.") } }>
 			<View style = {styles.modal}>
-				<Text style={styles.header_h4}>Your Charities: een twee drie vier</Text>
+				<Text style={styles.header_h4}>List of Charities</Text>
 				<View style = {styles.textField}>
-					<Text style={styles.prompt}>This is a modal.</Text>
+					<Text style={styles.prompt}>Pick one of the charities below to make a donation to. Or scan a QR-code of an address with your camera.</Text>
 				</View>
+
 				<Text>{'\n'}</Text>
 				<View style={{marginTop: 10, marginBottom: 10}}>
 					<SegmentedControls
@@ -229,7 +232,13 @@ class SendToken extends React.Component {
 				</TouchableHighlight>
 			</View>
 		</Modal>
-		
+		<View style={styles.container}>
+			<TextInput 
+				style={styles.input} 
+				placeholder = "tekst hiero"
+			/>
+			<TextinputTest/>
+		</View>
 		<Text style={styles.baseText}>
 			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
 			<Text style={styles.header_h4}> Send Tokens{'\n'}{'\n'}</Text>
@@ -252,6 +261,7 @@ class SendToken extends React.Component {
 			style={styles.input}
 			defaultValue = "Fetch from list"
 			underlineColorAndroid = "transparent"
+			autoCapitalize = "none"
 			autoFocus = {true}
 			selectable = {true}
 			selectTextOnFocus = {true}
@@ -271,6 +281,7 @@ class SendToken extends React.Component {
 			onChangeText={(detInputAmount) => this.setState({detInputAmount})}
 			value={this.state.detInputAmount} 
 		/>
+		
 		<Button 
 			color="#BCB3A2"
 			title="Submit"

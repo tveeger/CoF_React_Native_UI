@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, StyleSheet, AsyncStorage } from 'react-native';
+import { Button, Image, View, ScrollView, Text, StyleSheet, Modal, AsyncStorage, TouchableHighlight } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { NavigationActions } from 'react-navigation';
+import QRcodeWallet from './QRcodeWallet.js';
 
 class HomeScreen extends React.Component {
   static navigationOptions = {
@@ -25,6 +26,7 @@ class HomeScreen extends React.Component {
 			networkName: '',
 			walletAddress: '',
 			message: '',
+			modalVisible: false,
 		};
 	}
 
@@ -35,10 +37,25 @@ class HomeScreen extends React.Component {
 		self.setState({walletAddress: wallet.address});
 	}
 
+	toggleModal(visible) {
+		this.setState({ modalVisible: visible });
+	}
+
 
   render() {
     return (
 	<ScrollView style={styles.container}>
+		<Modal animationType = {"slide"} transparent = {false}
+			visible = {this.state.modalVisible}
+			onRequestClose = {() => { console.log("Modal has been closed.") } }>
+			<View style = {styles.modal}>
+				<QRcodeWallet/>
+				<TouchableHighlight style={styles.smallButton} onPress = {() => {
+					this.toggleModal(!this.state.modalVisible)}}>
+					<Text style = {styles.hyperLink}> Close Modal</Text>
+				</TouchableHighlight>
+			</View>
+		</Modal>
 		<View style={styles.logoSpace}>
           <Image source={require('../img/logo_dblue_transp_210x117.png')} style={{width: 210, height: 117}} />
         </View>
@@ -49,10 +66,16 @@ class HomeScreen extends React.Component {
 			<Text>{this.state.networkName}{'\n'}</Text>
 			<Text style={styles.prompt}>Address: </Text>
 			<Text>{this.state.walletAddress}{'\n'}</Text>
+		</Text>
+		<TouchableHighlight style={styles.smallButton} onPress = {() => {
+			this.toggleModal(!this.state.modalVisible)}}>
+			<Text style = {styles.hyperLink}> QR-code </Text>
+		</TouchableHighlight>
+		<Text style={styles.baseText}>
 			<Text>{this.state.message}</Text>
 		</Text>
 		
-		</ScrollView>
+	</ScrollView>
     );
   }
 };
@@ -92,6 +115,26 @@ const styles = StyleSheet.create({
 		width: 30,
 		height: 32,
   },
+  smallButton: {
+		backgroundColor: '#BBB',
+		padding: 4,
+		width: 150,
+		margin: 10,
+		borderRadius: 8,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	hyperLink: {
+		color: 'whitesmoke',
+		fontSize: 16,
+		fontWeight: 'bold'
+	},
+	modal: {
+		flex: 1,
+		alignItems: 'center',
+		backgroundColor: 'whitesmoke',
+		paddingTop: 100
+	},
 });
 
 export default HomeScreen;

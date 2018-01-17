@@ -47,18 +47,24 @@ class Websocket extends Component {
 
     }
 
-    emit() {
-      if( this.state.connected ) {
-        let posts = this.state.posts;
-        let postsAmount = posts.length + 1;
-        this.socket.send(this.state.msg);
-        posts = this.state.posts.slice();
-        posts.push({'id': postsAmount, 'payload': this.state.msg});
-        this.setState({ posts: posts });
-        this.setState({postsAmount: postsAmount});
-        this.setState({msg: ''});
-      }
-    }
+	emit() {
+		if( this.state.connected ) {
+			let posts = this.state.posts;
+			let postsAmount = posts.length + 1;
+			let currentdate = new Date();
+			let datetime = currentdate.getDay() + "/"+currentdate.getMonth() 
+			+ "/" + currentdate.getFullYear() + " @ " 
+			+ currentdate.getHours() + ":" 
+			+ currentdate.getMinutes();
+
+			this.socket.send(this.state.msg);
+			posts = this.state.posts.slice();
+			posts.push({'datetime': datetime, 'id': postsAmount, 'payload': this.state.msg});
+			this.setState({ posts: posts });
+			this.setState({postsAmount: postsAmount});
+			this.setState({msg: ''});
+		}
+	}
 
     componentWillMount() {
         const self = this;
@@ -68,7 +74,7 @@ class Websocket extends Component {
 
     renderItem = ({item}) => {
         return (
-          <Text style={styles.row}>{item.payload}</Text>
+          <Text style={styles.row}>{item.id}. {item.datetime} {'\n'}{item.payload}</Text>
         )
       }
 
