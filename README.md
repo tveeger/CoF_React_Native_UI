@@ -22,7 +22,9 @@ react-native link
 
 react-native start
 
+
 connect mobile
+
 
 prompt-2 (Android):
 
