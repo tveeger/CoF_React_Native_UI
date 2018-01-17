@@ -5,7 +5,6 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BirdlandToken from '../contracts/BirdlandToken.json';
-import TextinputTest from './TextinputTest.js';
 wallet = '';
 
 class SendToken extends React.Component {
@@ -237,7 +236,6 @@ class SendToken extends React.Component {
 				style={styles.input} 
 				placeholder = "tekst hiero"
 			/>
-			<TextinputTest/>
 		</View>
 		<Text style={styles.baseText}>
 			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
