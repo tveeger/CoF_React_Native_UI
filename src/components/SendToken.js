@@ -189,7 +189,7 @@ class SendToken extends React.Component {
 				onRefresh={this._onRefresh.bind(this)}
 			/>
 		}>
-
+		
 		<Modal animationType = {"slide"} transparent = {false}
 			visible = {this.state.modalVisible}
 			onRequestClose = {() => { console.log("Modal has been closed.") } }>
@@ -249,7 +249,7 @@ class SendToken extends React.Component {
 			<Text style={styles.prompt}>Send tokens to address: </Text>
 			<Text>{'\n'}</Text>
 		</Text>
-		<TextInput
+		{this.state.hasWallet &&<TextInput
 			style={styles.input}
 			defaultValue = "Fetch from list"
 			underlineColorAndroid = "transparent"
@@ -261,7 +261,7 @@ class SendToken extends React.Component {
 			placeholderTextColor = "#A0B5C8"
 			onChangeText = {(selectedCustomSegment) => this.setState({selectedCustomSegment})}
 			value = {this.state.transferToAddress}
-		/>
+		/>}
 		<TextInput
 			style={styles.input}
 			underlineColorAndroid = "transparent"
@@ -296,6 +296,7 @@ class SendToken extends React.Component {
 const styles = StyleSheet.create({
   container: {
     marginTop: 10,
+    marginLeft: 20,
     paddingLeft: 10,
     paddingRight: 10,
     paddingTop: 10,

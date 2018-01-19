@@ -131,7 +131,7 @@ class SendEth extends React.Component {
 		<Text style={styles.prompt}>Send tokens to address: </Text>
 		<Text>{'\n'}</Text>
 		</Text>
-		<TextInput
+		{this.state.hasWallet &&<TextInput
 			style={styles.input}
 			defaultValue = {this.state.toAddress}
 			underlineColorAndroid = "transparent"
@@ -142,7 +142,7 @@ class SendEth extends React.Component {
 			placeholderTextColor = "#A0B5C8"
 			onChangeText = {(toAddress) => this.setState({toAddress})}
 			/*value = {}*/
-		/>
+		/>}
 		<TextInput
 			style={styles.input}
 			underlineColorAndroid = "transparent"
@@ -174,6 +174,7 @@ class SendEth extends React.Component {
 const styles = StyleSheet.create({
 	container: {
 		marginTop: 10,
+		marginLeft: 20,
 		paddingLeft: 10,
 		paddingRight: 10,
 		paddingTop: 10,
