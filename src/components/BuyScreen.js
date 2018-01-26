@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
 import metacoin_artifacts from '../contracts/BirdlandToken.json'
@@ -17,17 +17,36 @@ class BuyScreen extends React.Component {
 		super(props);
 
 		this.state = {
-			connected: false,
 			isSubmitted: false,
+			isInitated: false,
+			connected: false,
 			euroInputAmount: '',
 			submitMessage: '',
 			walletAddress: '',
 			tokenName: '',
 			tokenAddress: '',
-			coinbaseTokenBalance: '',
 			submitCode: '',
 			confirmMessage: '',
+			incoming: '',
 		};
+
+		//this.socket = new WebSocket('ws://45.32.186.169:28475');
+        this.socket = new WebSocket('ws://echo.websocket.org'); //test
+        this.socket.onopen = () => {
+            this.setState({connected:true})
+        };
+        this.socket.onmessage = (e) => {
+            console.log(e.data);
+            this.setState({incoming:e.data});
+        };
+        this.socket.onerror = (e) => {
+            console.log(e.message);
+        };
+        this.socket.onclose = (e) => {
+            this.setState({connected:false})
+            console.log(e.code, e.reason);
+        };
+        this.sendMessage = this.sendMessage.bind(this);
 	}
 
 	componentWillMount() {
@@ -37,20 +56,31 @@ class BuyScreen extends React.Component {
 		self.setState({walletAddress: walletAddress});
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
-		//const MetaCoin = web3.eth.contract(metacoin_artifacts);
-		//contractInstance = MetaCoin.at(web3.currentProvider);
+		self.setState({isInitated:true});
+	}
 
+	componentWillUnmount() {
+		this.setState({isSubmitted: false});
+		this.setState({isInitated: false});
 	}
 
 	emit() {
 		const walletAddress = wallet.address;
-		let myEuros = this.state.euroInputAmount;
 		let submitCode = Math.random().toString(16).slice(2);
-		this.setState({submitCode: submitCode.toString()});
+		
+		if(submitCode != '') {
+			this.setState({submitCode: submitCode});
+			this.sendMessage(submitCode);
+		}
+	}
+
+	sendMessage(code) {
+		let messageContent = '{amount: "' + this.state.euroInputAmount + '", code: "' + code + '", sender:"' + wallet.address + '"}';
+		this.socket.send(messageContent);
+		this.setState({submitMessage: 'Transfer the exact amount of Euros to IBAN NL52BUNQ2025415389 and add the following code you see below in the comment area.'});
 		this.setState({isSubmitted: true});
-		this.setState({confirmMessage: '{amount: "' + myEuros + '", code: "' + submitCode + '", sender:"' + walletAddress + '"}'});
-		this.setState({submitMessage: 'Transfer the exact amount of Euros to IBAN 123456789 and add the following code you see below in the comment area.'});
 		this.setState({euroInputAmount: ''});
+		this.setState({isInitated: false});
 	}
 
 	render() {
@@ -60,11 +90,10 @@ class BuyScreen extends React.Component {
 				<Text style={styles.baseText}>
 					<Ionicons name={'ios-cart-outline'} size={26} style={styles.icon} />
 					<Text style={styles.header_h4}> Fetch some DET tokens {'\n'}{'\n'}</Text>
-					<Text style={styles.prompt}>{'\n'}DET Balance: </Text>
-					<Text>{this.state.coinbaseTokenBalance}{'\n'}{'\n'}</Text>
-					<Text>Set the amount of Euros you want to transfer</Text>
+					{this.state.isInitated && <Text>Set the amount of Euros you want to transfer.</Text>}					
 				</Text>
-				<TextInput
+
+				{this.state.isInitated && <TextInput
 					style={styles.input}
 					underlineColorAndroid = "transparent"
 					placeholder = "Minimum 1 Euro"
@@ -73,15 +102,16 @@ class BuyScreen extends React.Component {
 					maxLength={4}
 					onChangeText={(euroInputAmount) => this.setState({euroInputAmount})}
 					value={this.state.euroInputAmount}
-				/>
+				/>}
 
-				<Button 
+				{this.state.isInitated && <Button 
 					color="#BCB3A2"
 					title="submit"
 					accessibilityLabel="Submit"
 					onPress = { ()=> this.emit()}
-				/>
-				<Text style={styles.row}>{'\n'}{'\n'}{this.state.submitMessage}</Text>
+				/>}
+
+				<Text style={styles.row}>{'\n'}{this.state.submitMessage}</Text>
 				{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
 			</ScrollView>
 		);

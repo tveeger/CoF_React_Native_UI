@@ -12,7 +12,7 @@ class ChatScreen extends React.Component {
   render() {
     const { navigate } = this.props.navigation;
     return (
-      <View style={styles.container}>
+      <View>
          <Websocket />
       </View>
     );
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   container: {
     paddingLeft: 10,
     paddingRight: 10,
-    paddingTop: 10,
+    paddingTop: 0,
     backgroundColor: 'whitesmoke',
   },
 });

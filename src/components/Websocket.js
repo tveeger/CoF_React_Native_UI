@@ -74,7 +74,7 @@ class Websocket extends Component {
 
     renderItem = ({item}) => {
         return (
-          <Text style={styles.row}>{item.id}. {item.datetime} {'\n'}{item.payload}</Text>
+          <Text style={styles.row}>{item.datetime} {'\n'}{item.payload}</Text>
         )
       }
 
@@ -82,7 +82,7 @@ class Websocket extends Component {
         return (
             <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
               <View style={styles.container}>
-                <Text style={styles.baseText}>
+              	<Text style={styles.baseText}>
                   <Ionicons name={'ios-pulse-outline'} size={26} style={styles.icon} />
                   <Text style={styles.header_h4}> CoF Chat Channel {'\n'}{'\n'}</Text>
                   <Text style={styles.prompt}>connected:</Text>
@@ -113,6 +113,7 @@ class Websocket extends Component {
                 data={this.state.posts}
                 renderItem={this.renderItem}
                 keyExtractor={extractKey}
+                inverted={true}
                />
             </ScrollView>
             

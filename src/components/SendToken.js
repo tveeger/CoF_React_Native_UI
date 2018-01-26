@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, TextInput, AsyncStorage, Modal, StyleSheet, RefreshControl, TouchableHighlight } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, AsyncStorage, Modal, StyleSheet, RefreshControl, ActivityIndicator, TouchableHighlight } from 'react-native';
 import { RadioButtons, SegmentedControls } from 'react-native-radio-buttons';
 import ethers from 'ethers';
 import Connector from './Connector.js';
@@ -32,6 +32,7 @@ class SendToken extends React.Component {
 			isTransferSuccess: false,
 			refreshing: false,
 			modalVisible: false,
+			isValidAddress: false,
 			selectedCustomSegment: '',
 			transferToAddress: '',
 			charityList:[],
@@ -116,10 +117,23 @@ class SendToken extends React.Component {
 		}); 
 	}
 
+	isAddress(address) {
+		if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) {
+			return false;
+			} else if (/^(0x)?[0-9a-f]{40}$/.test(address) || /^(0x)?[0-9A-F]{40}$/.test(address)) {
+			// If it's all small caps or all all caps, return true
+				this.setState({isValidAddress: true});
+				return true;
+			} else {
+			
+			return false;
+		}
+	};
+
 	calcAmountString(inputAmount) {
 		let self = this;
 		const functionString = "0xa9059cbb000000000000000000000000";
-		let toAddressString = self.state.toAddress.substr(2);
+		let toAddressString = self.state.transferToAddress.substr(2);
 		let amountBN = ethers.utils.bigNumberify(inputAmount);
 		let amountHex = amountBN.toHexString();
 		let s = "0000000000000000000000000000000000000000000000000000000000000000" + amountHex.substr(2);
@@ -137,6 +151,9 @@ class SendToken extends React.Component {
 			let amount = self.state.detInputAmount;
 			const tokenAddress = daTokenAddress;
 			let transactionHash;
+			self.setState({isSigned: false});
+			self.setState({isTransferSuccess: false});
+			//self.setState({message: "OK: " + self.state.transferToAddress});
 
 			const transaction = {
 				from: wallet.address,
@@ -162,7 +179,7 @@ class SendToken extends React.Component {
 		}
 	}
 
-	_onRefresh() {
+	onRefresh() {
 		this.setState({refreshing: true});
 		this.getWalletInfo().then(() => {
 			this.setState({refreshing: false});
@@ -177,7 +194,6 @@ class SendToken extends React.Component {
 	const options = this.state.charityList;
 
 	function setSelectedOption(option){
-		//this.setState({selectedCustomSegment: option});
 		this.setState({transferToAddress: option.value});
 		this.toggleModal(false);
 	}
@@ -186,7 +202,7 @@ class SendToken extends React.Component {
       <ScrollView style={styles.container} refreshControl={
 			<RefreshControl
 				refreshing={this.state.refreshing}
-				onRefresh={this._onRefresh.bind(this)}
+				onRefresh={this.onRefresh.bind(this)}
 			/>
 		}>
 		
@@ -210,7 +226,7 @@ class SendToken extends React.Component {
 						containerStyle= {{marginLeft: 10, marginRight: 10, width: 320}}
 						options={ options }
 						onSelection={ setSelectedOption.bind(this) }
-						selectedOption={ this.state.selectedCustomSegment }
+						selectedOption={ this.state.transferToAddress }
 						extractText={ (option) => option.label }
 						testOptionEqual={ (a, b) => {
 						if (!a || !b) {
@@ -251,7 +267,7 @@ class SendToken extends React.Component {
 		</Text>
 		{this.state.hasWallet &&<TextInput
 			style={styles.input}
-			defaultValue = "Fetch from list"
+			defaultValue = {this.state.transferToAddress}
 			underlineColorAndroid = "transparent"
 			autoCapitalize = "none"
 			autoFocus = {true}
@@ -259,8 +275,7 @@ class SendToken extends React.Component {
 			selectTextOnFocus = {true}
 			maxLength = {80}
 			placeholderTextColor = "#A0B5C8"
-			onChangeText = {(selectedCustomSegment) => this.setState({selectedCustomSegment})}
-			value = {this.state.transferToAddress}
+			onChangeText = {(transferToAddress) => this.setState({transferToAddress})}
 		/>}
 		<TextInput
 			style={styles.input}
@@ -284,6 +299,7 @@ class SendToken extends React.Component {
 			{this.state.isSigned && <Text><Ionicons name={'ios-cog-outline'} size={26} style={styles.icon} /> Just a minute. Your transaction will be mined now...</Text>}
 			{this.state.isTransferSuccess && <Text style={styles.prompt}>Hash is mined:{'\n'} </Text>}
 			{this.state.isTransferSuccess && <Text>{this.state.submitMessage}{'\n'}</Text>}
+			{this.state.isValidAddress && <Text style={styles.errorText}>Not a valid address{'\n'}</Text>}
 			<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>
 			
 		</Text>
@@ -297,6 +313,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 10,
     marginLeft: 20,
+    marginTop: 30,
     paddingLeft: 10,
     paddingRight: 10,
     paddingTop: 10,
@@ -341,7 +358,8 @@ const styles = StyleSheet.create({
 		backgroundColor: '#8192A2',
 		padding: 4,
 		width: 320,
-		margin: 20,
+		marginBottom: 10,
+		marginLeft: 20,
 		borderRadius: 4,
 		alignItems: 'center',
 		justifyContent: 'center',

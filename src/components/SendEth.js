@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, AsyncStorage, TextInput, StyleSheet, RefreshControl } from 'react-native';
+import { Button, Image, View, ScrollView, Text, AsyncStorage, TextInput, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
 import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -106,7 +106,7 @@ class SendEth extends React.Component {
 		}
 	}
 
-	_onRefresh() {
+	onRefresh() {
 		this.setState({refreshing: true});
 		this.getWalletInfo().then(() => {
 			this.setState({refreshing: false});
@@ -118,7 +118,7 @@ class SendEth extends React.Component {
       <ScrollView style={styles.container} refreshControl={
 			<RefreshControl
 				refreshing={this.state.refreshing}
-				onRefresh={this._onRefresh.bind(this)}
+				onRefresh={this.onRefresh.bind(this)}
 			/>
 		}>
 		<Text style={styles.baseText}>
@@ -173,7 +173,7 @@ class SendEth extends React.Component {
 
 const styles = StyleSheet.create({
 	container: {
-		marginTop: 10,
+		marginTop: 30,
 		marginLeft: 20,
 		paddingLeft: 10,
 		paddingRight: 10,

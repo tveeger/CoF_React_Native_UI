@@ -72,7 +72,7 @@ class Nav extends React.Component {
 		this.setState({ modalMessage: 'Your wallet has been deleted but still exists on the blockchain. You can recover it by clicking Recover Wallet.' });
 	}
 
-	_onRefresh() {
+	onRefresh() {
 		this.setState({refreshing: true});
 		this.getMnemonic().then(() => {
 			this.setState({refreshing: false});
@@ -86,7 +86,7 @@ class Nav extends React.Component {
 			<ScrollView refreshControl={
 				<RefreshControl
 					refreshing={this.state.refreshing}
-					onRefresh={this._onRefresh.bind(this)}
+					onRefresh={this.onRefresh.bind(this)}
 				/>
 			}>
 				<Modal animationType = {"slide"} transparent = {false}
@@ -100,36 +100,42 @@ class Nav extends React.Component {
 						<Button
 							title="Create new Wallet"
 							color="#BCB3A2"
-							onPress={() => {this.toggleModal(!this.state.modalVisible), navigate('CreateWalletForm')} } />
+							onPress={() => {this.toggleModal(!this.state.modalVisible), navigate('CreateWalletForm')} } 
+						/>
 						<Text>{'\n'}</Text>
 						<Button
 							title="Recover Wallet"
 							color="#BCB3A2"
-							onPress={() => {this.toggleModal(!this.state.modalVisible), navigate('RecoverWalletForm')} } />
+							onPress={() => {this.toggleModal(!this.state.modalVisible), navigate('RecoverWalletForm')} } 
+						/>
 						<Text>{'\n'}</Text>
-						<Button
-							title="Delete Wallet"
-							color="#BCB3A2"
-							onPress={() => {this.toggleModal(!this.state.modalVisible), this.unconnect()} } />
+						{this.state.hasWallet && <Button 
+							title="Delete Wallet" 
+							color="#BCB3A2" 
+							onPress={() => {this.toggleModal(!this.state.modalVisible), this.unconnect()} } 
+						/>}
 						<View style = {styles.textField}>
 							<Text style={styles.prompt}>{'\n'}{this.state.modalMessage}{'\n'}</Text>
 						</View>
-						<TouchableHighlight style={styles.smallButton} onPress = {() => {
+						<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 							this.toggleModal(!this.state.modalVisible)}}>
-							<Text style = {styles.hyperLink}> Close Modal</Text>
+							<Text style = {styles.hyperLink}> Close</Text>
 						</TouchableHighlight>
 					</View>
 				</Modal>
+				
 				{this.state.hasWallet && <HomeScreen/>}
 				{!this.state.hasWallet && <Text>{'\n'}{'\n'}</Text>}
-				{this.state.modalVisible && <ActivityIndicator size="large" color="#8192A2" />}
-				<TouchableHighlight style={styles.smallButton} onPress = {() => {
+				{!this.state.hasWallet && <ActivityIndicator size="large" color="#8192A2" />}
+
+				{this.state.hasWallet && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
 					<Text style = {styles.hyperLink}> Change Wallet </Text>
-				</TouchableHighlight>
-				{!this.state.hasWallet && <TouchableHighlight style={styles.smallButton} onPress = {() => {
-					this._onRefresh()}}><Text style = {styles.hyperLink}> Reload </Text></TouchableHighlight>}
-				<Text style={styles.errorText}>{this.state.message}</Text>
+				</TouchableHighlight>}
+				{!this.state.hasWallet && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+					this.toggleModal(!this.state.modalVisible)}}>
+					<Text style = {styles.hyperLink}> Create / Recover Wallet </Text>
+				</TouchableHighlight>}
 			</ScrollView>
 			
 		  <View>
@@ -233,7 +239,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	smallButton: {
-		backgroundColor: '#BBB',
+		backgroundColor: '#BCB3A2',
 		padding: 4,
 		width: 150,
 		margin: 20,
@@ -247,6 +253,24 @@ const styles = StyleSheet.create({
 		width: 100,
 		marginLeft: 2,
 		marginBottom: 2,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	smallBlueButton: {
+		backgroundColor: '#8192A2',
+		padding: 4,
+		width: 200,
+		margin: 20,
+		borderRadius: 4,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	mediumButton: {
+		backgroundColor: '#BBB',
+		padding: 4,
+		width: 250,
+		margin: 20,
+		borderRadius: 8,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},

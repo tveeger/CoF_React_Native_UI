@@ -1,4 +1,3 @@
-//["scheme", "cabbage", "chef", "master", "apple", "flame", "juice", "release", "macro", "zero", "palm", "embark", "sulfur", "musk", "nature", "blur", "influx", "doubt", "pudding", "engine", "bring", "salt", "strong", "joy", "basket", "dull", "dirt", "fix", "holy", "zebra", "book", "radar", "posture", "flute", "evening", "fiction", "road", "tomorrow", "surge", "mouse", "monkey", "year", "hand", "blink", "wise", "halt", "blow", "orphan"]
 import React, { Component } from 'react';
 import { Button, AsyncStorage, View, ScrollView, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import ethers from 'ethers';
@@ -45,11 +44,6 @@ class CreateWalletForm extends React.Component {
 		let self = this;
 		self.getMnemonic();
 	}
-
-/*	componentDidMount() {
-		AsyncStorage.getItem('mnemonic')
-		.then((value) => this.setState({ 'savedMnemonic': value }));
-	}*/
 
 	componentWillUnmount() {
 		this.setState({mnemonicList: ''});	

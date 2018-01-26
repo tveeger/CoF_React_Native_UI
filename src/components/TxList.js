@@ -27,12 +27,12 @@ class TxList extends React.Component {
   	let self = this;
     let offset = self.state.offset;
 
-    return fetch('http://rinkeby.etherscan.io/api?module=account&action=txlist&address=0x83fb0a6537f5ad53742aa6bf86e54db369bbd0f6&startblock=0&endblock=99999999&page=1&offset=99&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV') //with pagination
-    //return fetch('http://rinkeby.etherscan.io/api?module=account&action=txlist&address=0x83fb0a6537f5ad53742aa6bf86e54db369bbd0f6&startblock=0&endblock=99999999&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV') 
+    //return fetch('http://rinkeby.etherscan.io/api?module=account&action=txlist&address=0x83fb0a6537f5ad53742aa6bf86e54db369bbd0f6&startblock=0&endblock=99999999&page=1&offset=99&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV') //with pagination
+    return fetch('http://rinkeby.etherscan.io/api?module=account&action=txlist&address=0x83fb0a6537f5ad53742aa6bf86e54db369bbd0f6&startblock=0&endblock=99999999&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV') 
       .then((response) => response.json()) 
       .then((responseJson) => { 
         self.setState({incoming: responseJson.result});
-        //self.setState({txAmt: responseJson.result.length});
+        self.setState({txAmt: responseJson.result.length});
       }) 
       .catch((error) => { 
         self.setState({message: "! " + error});
@@ -71,6 +71,7 @@ class TxList extends React.Component {
           <Text style={styles.baseText}>
             <Ionicons name={'ios-shuffle-outline'} size={26} style={styles.icon} />
             <Text style={styles.header_h4}> Your Transfer History{'\n'}</Text>
+            <Text>{this.state.txAmt} transactions</Text>
           </Text>
         </View>
         <FlatList
@@ -78,6 +79,7 @@ class TxList extends React.Component {
           data={this.state.incoming}
           renderItem={this.renderItem}
           keyExtractor={extractKey}
+          inverse={true}
          />
       </ScrollView>
     );

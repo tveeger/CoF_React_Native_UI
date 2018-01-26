@@ -1,11 +1,22 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import QRCode from 'react-native-qrcode';
+import Connector from './Connector.js';
 
 class QRcodeWallet extends Component {
-	state = {
-		walletAddress: '0x54817cFEB229B7ABf8190E8E4AA4eD5E3181f712',
-	};
+	constructor(props) {
+		super(props);
+			
+		this.state = {
+			walletAddress: '',
+		};
+	}
+
+	componentWillMount() {
+		var self = this;
+		const walletAddress = '0x54817cFEB229B7ABf8190E8E4AA4eD5E3181f712';
+		self.setState({walletAddress: walletAddress});
+	}
 
 	render() {
 		return (
@@ -24,7 +35,7 @@ class QRcodeWallet extends Component {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: 'white',
+		backgroundColor: 'whitesmoke',
 		alignItems: 'center',
 		justifyContent: 'center'
 	}

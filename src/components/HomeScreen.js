@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, StyleSheet, Modal, AsyncStorage, TouchableHighlight } from 'react-native';
+import { Image, View, ScrollView, Text, StyleSheet, Modal, TouchableHighlight } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -49,32 +49,30 @@ class HomeScreen extends React.Component {
 			visible = {this.state.modalVisible}
 			onRequestClose = {() => { console.log("Modal has been closed.") } }>
 			<View style = {styles.modal}>
+				<Text style={styles.baseText}>
+					<Text style={styles.header_h4}>Wallet Info{'\n'}</Text>
+					<Text style={styles.prompt}>Network: </Text>
+					<Text>{this.state.networkName}{'\n'}</Text>
+				</Text>
 				<QRcodeWallet/>
-				<TouchableHighlight style={styles.smallButton} onPress = {() => {
+				<Text>{'\n'}{'\n'}</Text>
+				<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
-					<Text style = {styles.hyperLink}> Close Modal</Text>
+					<Text style = {styles.hyperLink}> Close </Text>
 				</TouchableHighlight>
 			</View>
 		</Modal>
 		<View style={styles.logoSpace}>
           <Image source={require('../img/logo_dblue_transp_210x117.png')} style={{width: 210, height: 117}} />
+        	<Text style={styles.prompt}>{'\n'}Make safe donations</Text>
         </View>
 		<Text style={styles.baseText}>
 			<Text style={styles.errorText}>{this.state.message}{'\n'}{'\n'}</Text>
-			<Text style={styles.header_h4}>Wallet {'\n'}</Text>
-			<Text style={styles.prompt}>Network: </Text>
-			<Text>{this.state.networkName}{'\n'}</Text>
-			<Text style={styles.prompt}>Address: </Text>
-			<Text>{this.state.walletAddress}{'\n'}</Text>
 		</Text>
-		<TouchableHighlight style={styles.smallButton} onPress = {() => {
+		<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 			this.toggleModal(!this.state.modalVisible)}}>
-			<Text style = {styles.hyperLink}> QR-code </Text>
+			<Text style = {styles.hyperLink}> Wallet Info</Text>
 		</TouchableHighlight>
-		<Text style={styles.baseText}>
-			<Text>{this.state.message}</Text>
-		</Text>
-		
 	</ScrollView>
     );
   }
@@ -116,11 +114,20 @@ const styles = StyleSheet.create({
 		height: 32,
   },
   smallButton: {
-		backgroundColor: '#BBB',
+		backgroundColor: '#BCB3A2',
 		padding: 4,
 		width: 150,
 		margin: 10,
 		borderRadius: 8,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	smallBlueButton: {
+		backgroundColor: '#8192A2',
+		padding: 4,
+		width: 150,
+		margin: 10,
+		borderRadius: 4,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
