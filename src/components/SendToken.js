@@ -19,7 +19,6 @@ class SendToken extends React.Component {
 		this.state = {
 			hasWallet: false,
 			ethBalance: '',
-			tokenName: '',
 			tokenBalance: '',
 			tokenSymbol: '',
 			tokenAddress: '',
@@ -48,22 +47,15 @@ class SendToken extends React.Component {
 				wallet.provider = etherscanProvider;
 				self.setState({hasWallet: true});
 				self.setState({walletAddress: wallet.address});
-				wallet.provider = etherscanProvider;
 			}
 			const tokenAddress = daTokenAddress;
 			contract = new ethers.Contract(tokenAddress, BirdlandToken, etherscanProvider);
 			contract.connect(etherscanProvider);
 			let tokenBalance = 0;
-			let tokenName = '';
 			let tokenSymbol = '';
 			let txCount = 0;
 
 			if(contract !== '') {
-				//name
-				contract.name().then(function(result){
-					tokenName = result[0];
-					self.setState({tokenName: tokenName});
-				});
 				//symbol
 				contract.symbol().then(function(result){
 					let tokenSymbol = result[0];
@@ -250,12 +242,10 @@ class SendToken extends React.Component {
 		<Text style={styles.baseText}>
 			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
 			<Text style={styles.header_h4}> Send Tokens{'\n'}{'\n'}</Text>
-			<Text style={styles.prompt}>Name: </Text>
-			<Text>{this.state.tokenName}{'\n'}</Text>
+			<Text style={styles.prompt}>Balance: </Text>
+			<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'}</Text>
 			<Text style={styles.prompt}>Nonce: </Text>
-			<Text>{this.state.nonce}{'\n'}</Text>
-			<Text style={styles.prompt}>Your Balance: </Text>
-			<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'} {'\n'}</Text>
+			<Text>{this.state.nonce}{'\n'}{'\n'}</Text>
 		</Text>
 		<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 			this.toggleModal(!this.state.modalVisible)}}>

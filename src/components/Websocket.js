@@ -24,20 +24,23 @@ class Websocket extends Component {
             msg:"",
             incoming:"",
             posts: [],
-            postsAmount: 0
+            postsAmount: 0,
+            errorMessage: "",
         };
 
-        //this.socket = new WebSocket('ws://45.32.186.169:28475');
-        this.socket = new WebSocket('ws://echo.websocket.org'); //test
+        this.socket = new WebSocket('ws://45.32.186.169:28475');
+        //this.socket = new WebSocket('ws://127.0.0.1:28475');
+        //this.socket = new WebSocket('ws://echo.websocket.org'); //test
         this.socket.onopen = () => {
             this.setState({connected:true})
         };
         this.socket.onmessage = (e) => {
-            console.log(e.data);
+            //console.log(e.data);
             this.setState({incoming:e.data});
         };
         this.socket.onerror = (e) => {
-            console.log(e.message);
+            //console.log(e.message);
+            this.setState({errorMessage:e.message});
         };
         this.socket.onclose = (e) => {
             this.setState({connected:false})
@@ -106,6 +109,7 @@ class Websocket extends Component {
                   {this.connected && <Text style={styles.prompt}>, amount: </Text>}
                   {this.connected && <Text>{this.state.postsAmount}</Text>}
                 </Text>
+                <Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
               </View>
             
               <FlatList
@@ -166,6 +170,10 @@ const styles = StyleSheet.create({
   icon: {
     color: '#2D4866',
     fontSize: 30,
+  },
+  errorText: {
+    marginTop: 10,
+    color: 'red'
   },
 });
 

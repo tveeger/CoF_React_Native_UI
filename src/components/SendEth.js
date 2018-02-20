@@ -124,8 +124,6 @@ class SendEth extends React.Component {
 		<Text style={styles.baseText}>
 			<Ionicons name={'md-share-alt'} size={26} style={styles.icon} />
 			<Text style={styles.header_h4}> Send Ethers{'\n'}{'\n'}</Text>
-			<Text style={styles.prompt}>Wallet: </Text>
-			<Text>{this.state.walletAddress}{'\n'}</Text>
 			<Text style={styles.prompt}>Eth Balance: </Text>
 			<Text>Ξ {this.state.ethBalance}{'\n'}{'\n'}</Text>
 		<Text style={styles.prompt}>Send tokens to address: </Text>

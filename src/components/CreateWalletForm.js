@@ -74,7 +74,7 @@ class CreateWalletForm extends React.Component {
 			AsyncStorage.setItem('mnemonic', newMnemonic);
 			
 			//const SigningKey = ethers._SigningKey;
-			//const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+			//const privateKey = wallet.privateKey;
 			//const signingKey = new SigningKey(privateKey);
 			//let messageBytes = ethers.utils.toUtf8Bytes(mnemonicString);
 			//let messageDigest = ethers.utils.keccak256(messageBytes);

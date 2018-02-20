@@ -23,15 +23,16 @@ class BuyScreen extends React.Component {
 			euroInputAmount: '',
 			submitMessage: '',
 			walletAddress: '',
-			tokenName: '',
 			tokenAddress: '',
 			submitCode: '',
 			confirmMessage: '',
 			incoming: '',
+			errorMessage: '',
 		};
 
-		//this.socket = new WebSocket('ws://45.32.186.169:28475');
-        this.socket = new WebSocket('ws://echo.websocket.org'); //test
+		this.socket = new WebSocket('ws://45.32.186.169:28475');
+		//this.socket = new WebSocket('ws://127.0.0.1:28475');
+        //this.socket = new WebSocket('ws://echo.websocket.org'); //test
         this.socket.onopen = () => {
             this.setState({connected:true})
         };
@@ -40,6 +41,7 @@ class BuyScreen extends React.Component {
             this.setState({incoming:e.data});
         };
         this.socket.onerror = (e) => {
+            this.setState({errorMessage:e.message});
             console.log(e.message);
         };
         this.socket.onclose = (e) => {
@@ -47,6 +49,7 @@ class BuyScreen extends React.Component {
             console.log(e.code, e.reason);
         };
         this.sendMessage = this.sendMessage.bind(this);
+        this.emit = this.emit.bind(this);
 	}
 
 	componentWillMount() {
@@ -54,6 +57,7 @@ class BuyScreen extends React.Component {
 		wallet.provider = etherscanProvider;
 		const walletAddress = wallet.address;
 		self.setState({walletAddress: walletAddress});
+		
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
 		self.setState({isInitated:true});
@@ -76,8 +80,18 @@ class BuyScreen extends React.Component {
 
 	sendMessage(code) {
 		let messageContent = '{amount: "' + this.state.euroInputAmount + '", code: "' + code + '", sender:"' + wallet.address + '"}';
+		/*const SigningKey = ethers._SigningKey;
+		const privateKey = wallet.privateKey;
+		const signingKey = new SigningKey(privateKey);
+		let messageBytes = ethers.utils.toUtf8Bytes(messageContent);
+		let messageDigest = ethers.utils.keccak256(messageBytes);
+		let signature = signingKey.signDigest(messageDigest);*/
 		this.socket.send(messageContent);
 		this.setState({submitMessage: 'Transfer the exact amount of Euros to IBAN NL52BUNQ2025415389 and add the following code you see below in the comment area.'});
+		/*var recovered = SigningKey.recover(messageDigest, signature.r,
+                    signature.s, signature.recoveryParam);
+		this.setState({pk: messageContent});
+		this.setState({errorMessage: recovered});*/
 		this.setState({isSubmitted: true});
 		this.setState({euroInputAmount: ''});
 		this.setState({isInitated: false});
@@ -113,6 +127,8 @@ class BuyScreen extends React.Component {
 
 				<Text style={styles.row}>{'\n'}{this.state.submitMessage}</Text>
 				{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
+				<Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
+				<Text style={styles.row}>{'\n'}{this.state.incoming}</Text>
 			</ScrollView>
 		);
 	}
@@ -173,6 +189,10 @@ const styles = StyleSheet.create({
 		color: '#2D4866',
 		fontSize: 30,
 	},
+	errorText: {
+    marginTop: 10,
+    color: 'red'
+  },
 });
 
 
