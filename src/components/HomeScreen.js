@@ -55,7 +55,7 @@ class HomeScreen extends React.Component {
 					<Text>{this.state.networkName}{'\n'}</Text>
 				</Text>
 				<QRcodeWallet/>
-				<Text>{'\n'}{'\n'}</Text>
+				<Text>{'\n'}</Text>
 				<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
 					<Text style = {styles.hyperLink}> Close </Text>

@@ -14,7 +14,8 @@ class QRcodeWallet extends Component {
 
 	componentWillMount() {
 		var self = this;
-		const walletAddress = '0x54817cFEB229B7ABf8190E8E4AA4eD5E3181f712';
+		wallet.provider = etherscanProvider;
+		const walletAddress = wallet.address;
 		self.setState({walletAddress: walletAddress});
 	}
 

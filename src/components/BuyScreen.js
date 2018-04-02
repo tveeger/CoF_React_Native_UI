@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, AsyncStorage } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
-import metacoin_artifacts from '../contracts/BirdlandToken.json'
+//import metacoin_artifacts from '../contracts/BirdlandToken.json';
+import metacoin_artifacts from '../contracts/EntboxContract.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Octicons from 'react-native-vector-icons/Octicons';
 import FA from 'react-native-vector-icons/FontAwesome';
+wallet = '';
 
 class BuyScreen extends React.Component {
 	static navigationOptions = {
-		title: 'Get your tokens',
+		title: 'Fetch your DET tokens',
 		tabBarLabel: 'Fetch',
 	};
 
@@ -18,16 +20,21 @@ class BuyScreen extends React.Component {
 
 		this.state = {
 			isSubmitted: false,
-			isInitated: false,
+			isInitiated: false,
 			connected: false,
 			euroInputAmount: '',
 			submitMessage: '',
 			walletAddress: '',
+			tokenId: '',
 			tokenAddress: '',
 			submitCode: '',
 			confirmMessage: '',
 			incoming: '',
 			errorMessage: '',
+			euroAmountFromReceipt: 0,
+			detsAmountFromReceipt: 0,
+			tokenCreatedStatusFromReceipt: false,
+			tokenCreatorFromReceipt: '',
 		};
 
 		this.socket = new WebSocket('ws://45.32.186.169:28475');
@@ -39,17 +46,55 @@ class BuyScreen extends React.Component {
         this.socket.onmessage = (e) => {
             console.log(e.data);
             this.setState({incoming:e.data});
+            
         };
         this.socket.onerror = (e) => {
             this.setState({errorMessage:e.message});
             console.log(e.message);
+            
         };
         this.socket.onclose = (e) => {
             this.setState({connected:false})
             console.log(e.code, e.reason);
         };
-        this.sendMessage = this.sendMessage.bind(this);
-        this.emit = this.emit.bind(this);
+        this.sendIbanTransferMessage = this.sendIbanTransferMessage.bind(this);
+        this.generateActivationCode = this.generateActivationCode.bind(this);
+	}
+
+	getWalletInfo = async () => {
+		try {
+			const self = this;
+			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
+			contract.connect(etherscanProvider);
+			let tokenId = 'dada';
+
+			if(contract !== '') {
+				//get Euro amount from receipt
+				contract.getEuroAmountFromReceipt(daTokenId).then(function(result){
+					self.setState({euroAmountFromReceipt: result.toString()});
+				});
+				//get DET amount from receipt
+				contract.getDetsAmountFromReceipt(tokenId).then(function(result){
+					self.setState({detsAmountFromReceipt: result.toString()});
+				});
+				//get token created from receipt
+				contract.getTokenCreatedStatusFromReceipt(tokenId).then(function(result){
+					self.setState({tokenCreatedStatusFromReceipt: result.toString()});
+				});
+				//get token creator from receipt
+				contract.getTokenCreatorFromReceipt(tokenId).then(function(result){
+					self.setState({tokenCreatorFromReceipt: result});
+				});
+			}
+			let tokenCreatedStatusFromReceipt = self.state.tokenCreatedStatusFromReceipt;
+			if(tokenCreatedStatusFromReceipt) {
+				self.setState({euroAmountFromReceipt: 0});
+			}
+		}
+		catch(error) {
+			this.setState({hasWallet: false});
+			this.setState({message: error});
+		}
 	}
 
 	componentWillMount() {
@@ -57,28 +102,33 @@ class BuyScreen extends React.Component {
 		wallet.provider = etherscanProvider;
 		const walletAddress = wallet.address;
 		self.setState({walletAddress: walletAddress});
+		self.getWalletInfo();
 		
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
-		self.setState({isInitated:true});
+		const tokenId = daTokenId;
+		self.setState({tokenId: tokenId});
+		self.setState({isInitiated:true});
+
+
 	}
 
 	componentWillUnmount() {
 		this.setState({isSubmitted: false});
-		this.setState({isInitated: false});
+		this.setState({isInitiated: false});
 	}
 
-	emit() {
+	generateActivationCode() {
 		const walletAddress = wallet.address;
 		let submitCode = Math.random().toString(16).slice(2);
 		
 		if(submitCode != '') {
 			this.setState({submitCode: submitCode});
-			this.sendMessage(submitCode);
+			this.sendIbanTransferMessage(submitCode);
 		}
 	}
 
-	sendMessage(code) {
+	sendIbanTransferMessage(code) {
 		let messageContent = '{amount: "' + this.state.euroInputAmount + '", code: "' + code + '", sender:"' + wallet.address + '"}';
 		/*const SigningKey = ethers._SigningKey;
 		const privateKey = wallet.privateKey;
@@ -94,7 +144,31 @@ class BuyScreen extends React.Component {
 		this.setState({errorMessage: recovered});*/
 		this.setState({isSubmitted: true});
 		this.setState({euroInputAmount: ''});
-		this.setState({isInitated: false});
+		this.setState({isInitiated: false});
+	}
+
+	configDataString(inputAmount) {
+		let self = this;
+		const functionString = "0xa9059cbb000000000000000000000000";
+		let toAddressString = self.state.transferToAddress.substr(2);
+		let amountBN = ethers.utils.bigNumberify(inputAmount);
+		let amountHex = amountBN.toHexString();
+		let s = "0000000000000000000000000000000000000000000000000000000000000000" + amountHex.substr(2);
+		let newLength = s.length-64;
+		let zeroString = s.substr(newLength);
+		let dataString = functionString + toAddressString + zeroString;
+		return dataString;
+	}
+
+	createDets(id) {
+		/* ID: "dada"
+		0xb702bbd900000000000000000000000000000000000000000000000000000000000000
+		20000000000000000000000000000000000000000000000000000000000000000
+		46461646100000000000000000000000000000000000000000000000000000000
+		*/
+
+		this.setState({errorMessage: id});
+		this.getWalletInfo();
 	}
 
 	render() {
@@ -103,11 +177,14 @@ class BuyScreen extends React.Component {
 			<ScrollView style={styles.container}>
 				<Text style={styles.baseText}>
 					<Ionicons name={'ios-cart-outline'} size={26} style={styles.icon} />
-					<Text style={styles.header_h4}> Fetch some DET tokens {'\n'}{'\n'}</Text>
-					{this.state.isInitated && <Text>Set the amount of Euros you want to transfer.</Text>}					
+					<Text style={styles.header_h4}> Transfer Euros {'\n'}{'\n'}</Text>
+					{this.state.isInitiated && <Text>First deposit cash (Euros) from your bank account to your CoF account. 
+					{'\n'}{'\n'} 
+					</Text>}
+					{this.state.isInitiated && <Text style={styles.prompt}>Set the amount of Euros you want to transfer: </Text> }
 				</Text>
 
-				{this.state.isInitated && <TextInput
+				{this.state.isInitiated && <TextInput
 					style={styles.input}
 					underlineColorAndroid = "transparent"
 					placeholder = "Minimum 1 Euro"
@@ -118,17 +195,28 @@ class BuyScreen extends React.Component {
 					value={this.state.euroInputAmount}
 				/>}
 
-				{this.state.isInitated && <Button 
+				{this.state.isInitiated && <Button 
 					color="#BCB3A2"
 					title="submit"
 					accessibilityLabel="Submit"
-					onPress = { ()=> this.emit()}
+					onPress = { ()=> this.generateActivationCode()}
 				/>}
-
-				<Text style={styles.row}>{'\n'}{this.state.submitMessage}</Text>
+				{!this.state.isSubmitted && <Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text> }
+				{this.state.isSubmitted && <Text style={styles.row}>{this.state.submitMessage}{'\n'}</Text> }
 				{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
-				<Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
-				<Text style={styles.row}>{'\n'}{this.state.incoming}</Text>
+				<Text style={styles.baseText}>
+					{this.state.isSubmitted && <Text style={styles.row}>{this.state.incoming}</Text> }
+					<Text style={styles.header_h4}>{'\n'}{'\n'}Your have &euro; {this.state.euroAmountFromReceipt} in your wallet {'\n'}{'\n'}</Text>
+					<Text></Text>
+					{this.state.tokenCreatedStatusFromReceipt && <Text>Press the button below to convert your Euros and create your DET tokens. You will receive 100 DET for each Euro.</Text> }
+				</Text>
+				{this.state.tokenCreatedStatusFromReceipt && <Button 
+					color="#BCB3A2"
+					title="Create tokens"
+					accessibilityLabel="Transfer"
+					onPress = { ()=> this.createDets(daTokenId)}
+				/> }
+
 			</ScrollView>
 		);
 	}
@@ -137,10 +225,11 @@ class BuyScreen extends React.Component {
 const styles = StyleSheet.create({
 	container: {
 		marginTop: 10,
+		marginLeft: 20,
+		marginTop: 30,
 		paddingLeft: 10,
 		paddingRight: 10,
 		paddingTop: 10,
-		backgroundColor: 'whitesmoke',
 	},
 	baseText: {
 		/*textAlign: 'left',*/

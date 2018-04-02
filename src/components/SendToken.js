@@ -4,13 +4,14 @@ import { RadioButtons, SegmentedControls } from 'react-native-radio-buttons';
 import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import BirdlandToken from '../contracts/BirdlandToken.json';
+//import BirdlandToken from '../contracts/BirdlandToken.json';
+import metacoin_artifacts from '../contracts/EntboxContract.json';
 wallet = '';
 
 class SendToken extends React.Component {
   static navigationOptions = {
-	title: 'Transfer Tokens',
-	tabBarLabel: 'Token'
+	title: 'Transfer DET Tokens',
+	tabBarLabel: 'Send'
   };
 
 	constructor(props) {
@@ -49,7 +50,7 @@ class SendToken extends React.Component {
 				self.setState({walletAddress: wallet.address});
 			}
 			const tokenAddress = daTokenAddress;
-			contract = new ethers.Contract(tokenAddress, BirdlandToken, etherscanProvider);
+			contract = new ethers.Contract(tokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
 			let tokenBalance = 0;
 			let tokenSymbol = '';
@@ -58,8 +59,7 @@ class SendToken extends React.Component {
 			if(contract !== '') {
 				//symbol
 				contract.symbol().then(function(result){
-					let tokenSymbol = result[0];
-					self.setState({tokenSymbol: tokenSymbol});
+					self.setState({tokenSymbol: result});
 				});
 			}
 
@@ -122,7 +122,7 @@ class SendToken extends React.Component {
 		}
 	};
 
-	calcAmountString(inputAmount) {
+	configDataString(inputAmount) {
 		let self = this;
 		const functionString = "0xa9059cbb000000000000000000000000";
 		let toAddressString = self.state.transferToAddress.substr(2);
@@ -154,7 +154,7 @@ class SendToken extends React.Component {
 				nonce: ethers.utils.bigNumberify(nonce),
 				gasPrice: ethers.utils.bigNumberify(20000000000),
 				gasLimit: ethers.utils.bigNumberify(100000),
-				data: this.calcAmountString(amount),
+				data: this.configDataString(amount),
 			}
 			let signedTransaction = wallet.sign(transaction);
 			//let parsedTransaction = ethers.Wallet.parseTransaction(signedTransaction);
@@ -241,7 +241,7 @@ class SendToken extends React.Component {
 		</Modal>
 		<Text style={styles.baseText}>
 			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
-			<Text style={styles.header_h4}> Send Tokens{'\n'}{'\n'}</Text>
+			<Text style={styles.header_h4}> Send DETs{'\n'}{'\n'}</Text>
 			<Text style={styles.prompt}>Balance: </Text>
 			<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'}</Text>
 			<Text style={styles.prompt}>Nonce: </Text>

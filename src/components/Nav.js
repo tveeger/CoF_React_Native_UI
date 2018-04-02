@@ -13,7 +13,8 @@ import BuyScreen from './BuyScreen.js';
 import AboutScreen from './AboutScreen.js';
 import CharitiesScreen from './CharitiesScreen.js';
 import TermsScreen from './TermsScreen.js';
-
+import AdminScreen from './AdminScreen.js';
+import RedeemScreen from './RedeemScreen.js';
 
 class Nav extends React.Component {
 	constructor(props) {
@@ -138,30 +139,42 @@ class Nav extends React.Component {
 				</TouchableHighlight>}
 			</ScrollView>
 			
-		  <View>
-		  	<View style={styles.buttonContainer}>
-				<TouchableHighlight style={styles.smallButton2} onPress = {() => {
-					navigate('BuyScreen')}}>
-					<Text style = {styles.hyperLink}> Fetch </Text>
-				</TouchableHighlight>
-				<TouchableHighlight style={styles.smallButton2} onPress = {() => {
-					navigate('TermsScreen')}}>
-					<Text style = {styles.hyperLink}> Terms </Text>
-				</TouchableHighlight>
-				<TouchableHighlight style={styles.smallButton2} onPress = {() => {
-					navigate('CharitiesScreen')}}>
-					<Text style = {styles.hyperLink}> Charities </Text>
-				</TouchableHighlight>
-				<TouchableHighlight style={styles.smallButton2} onPress = {() => {
-					navigate('AboutScreen')}}>
-					<Text style = {styles.hyperLink}> About </Text>
-				</TouchableHighlight>
-			</View>
-		  	<Button 
-				onPress={() => navigate('TxList')}
-				title="my transactions"
-				color="#BCB3A2"
-			/>
+			<View>
+				<View style={styles.buttonContainer}>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('BuyScreen')}}>
+						<Text style = {styles.hyperLink}> Fetch </Text>
+					</TouchableHighlight>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('RedeemScreen')}}>
+						<Text style = {styles.hyperLink}> Redeem </Text>
+					</TouchableHighlight>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('TxList')}}>
+						<Text style = {styles.hyperLink}> List </Text>
+					</TouchableHighlight>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('AdminScreen')}}>
+						<Text style = {styles.hyperLink}> Admin </Text>
+					</TouchableHighlight>
+				</View>
+				<View style={styles.buttonContainer}>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('TermsScreen')}}>
+						<Text style = {styles.hyperLink}> Terms </Text>
+					</TouchableHighlight>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('CharitiesScreen')}}>
+						<Text style = {styles.hyperLink}> Charities </Text>
+					</TouchableHighlight>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+						navigate('AboutScreen')}}>
+						<Text style = {styles.hyperLink}> About </Text>
+					</TouchableHighlight>
+					<TouchableHighlight style={styles.smallButton2} onPress = {() => {	}}>
+						<Text style = {styles.hyperLink}> Help </Text>
+					</TouchableHighlight>
+				</View>
 			</View>
 		</View>
 		);
@@ -203,6 +216,8 @@ const StackNav = StackNavigator({
   BuyScreen: { screen: BuyScreen },
   AboutScreen: { screen: AboutScreen },
   TermsScreen: { screen: TermsScreen },
+  AdminScreen: { screen: AdminScreen },
+  RedeemScreen: { screen: RedeemScreen },
   CharitiesScreen: { screen: CharitiesScreen }
   }, {
     navigationOptions: {

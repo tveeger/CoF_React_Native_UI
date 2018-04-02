@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { Button, Image, View, ScrollView, Text, StyleSheet, AsyncStorage } from 'react-native';
 import ethers from 'ethers';
 import Connector from './Connector.js';
-import metacoin_artifacts from '../contracts/BirdlandToken.json'
+//import metacoin_artifacts from '../contracts/BirdlandToken.json';
+import metacoin_artifacts from '../contracts/EntboxContract.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import BirdlandToken from '../contracts/BirdlandToken.json';
 
 class AboutScreen extends React.Component {
   static navigationOptions = {
@@ -20,10 +20,13 @@ class AboutScreen extends React.Component {
 		walletAddress: '',
 		coinbase: '',
 		tokenName: '',
+		tokenId: daTokenId,
 		tokenAddress: '',
 		tokenSymbol: '',
 		tokenDecimals: '',
-		tokenTotalSupply: '',
+		tokenVersion: '',
+		totalDetsAmount: 0,
+		totalDetsSupply: 0,
 		message: '',
 		};
 	}
@@ -38,29 +41,37 @@ class AboutScreen extends React.Component {
 	getWalletInfo = async () => {
 		try {
 			const self = this;
-			contract = new ethers.Contract(daTokenAddress, BirdlandToken, etherscanProvider);
+			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
 
 			if(contract !== '') {
 				//name
 				contract.name().then(function(result){
 					const tokenName = result[0];
-					self.setState({tokenName: tokenName});
+					self.setState({tokenName: result});
 				});
 				//symbol
 				contract.symbol().then(function(result){
 					const tokenSymbol = result[0];
-					self.setState({tokenSymbol: tokenSymbol});
+					self.setState({tokenSymbol: result});
 				});
 				//decimals
 				contract.decimals().then(function(result){
 					const tokenDecimals = result[0];
-					self.setState({tokenDecimals: tokenDecimals});
+					self.setState({tokenDecimals: result.toString()});
 				});
-				//total supply
+				//version
+				contract.version().then(function(result){
+					//const tokenVersion = result[0];
+					self.setState({tokenVersion: result});
+				});
+				//my total amount
+				contract.getTotalDetsAmount().then(function(result){
+					self.setState({totalDetsAmount: result.toString()});
+				});
+				//total DETs supply
 				contract.totalSupply().then(function(result){
-					const totalSupply = result[0];
-					self.setState({tokenTotalSupply: totalSupply.toString()});
+					self.setState({totalDetsSupply: result.toString()});
 				});
 			}
 		}
@@ -89,12 +100,17 @@ class AboutScreen extends React.Component {
 					<Text style={styles.header_h4}>About the Token{'\n'}</Text>
 					<Text style={styles.prompt}>Token: </Text>
 					<Text>{this.state.tokenName}{'\n'}</Text>
+					<Text style={styles.prompt}>Token ID: </Text>
+					<Text>{this.state.tokenId}{'\n'}</Text>
 					<Text style={styles.prompt}>Symbol: </Text>
 					<Text>{this.state.tokenSymbol}{'\n'}</Text>
 					<Text style={styles.prompt}>Decimals: </Text>
 					<Text>{this.state.tokenDecimals}{'\n'}</Text>
-					<Text style={styles.prompt}>Total Supply: </Text>
-					<Text>{this.state.tokenTotalSupply}{'\n'}{'\n'}</Text>
+					<Text style={styles.prompt}>Version: </Text>
+					<Text>{this.state.tokenVersion}{'\n'}</Text>
+					<Text style={styles.prompt}>Current / Total Supply: </Text>
+					<Text>DET {this.state.totalDetsAmount} / {this.state.totalDetsSupply} {'\n'}{'\n'}</Text>
+					
 					<Text>{this.state.message}</Text>
 				</Text>
 			</ScrollView>
