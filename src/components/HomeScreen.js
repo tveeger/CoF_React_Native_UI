@@ -22,7 +22,6 @@ class HomeScreen extends React.Component {
 		super(props);
 
 		this.state = {
-			hasWallet: false,
 			networkName: '',
 			walletAddress: '',
 			message: '',
@@ -32,7 +31,6 @@ class HomeScreen extends React.Component {
 
 	componentWillMount() {
 		let self = this;
-		//wallet.provider = etherscanProvider;
 		self.setState({networkName: wallet.provider.name});
 		self.setState({walletAddress: wallet.address});
 	}

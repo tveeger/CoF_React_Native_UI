@@ -7,6 +7,22 @@ class TermsScreen extends React.Component {
     title: 'Terms and Conditions',
 
   };
+
+  constructor(props) {
+    super(props);
+
+	this.state = {
+		hasWallet: false,
+		walletAddress: '',
+	};
+
+  }
+
+	componentWillMount() {
+		let self = this;
+		//self.setState({walletAddress: wallet.address});
+	}
+
     render() {
         return (
           <View style={styles.container}>

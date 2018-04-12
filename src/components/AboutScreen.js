@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { Button, Image, View, ScrollView, Text, StyleSheet, AsyncStorage } from 'react-native';
 import ethers from 'ethers';
 import Connector from './Connector.js';
-//import metacoin_artifacts from '../contracts/BirdlandToken.json';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -15,10 +14,6 @@ class AboutScreen extends React.Component {
 	super(props);
 
 	this.state = {
-		connected: false,
-		hasWallet: false,
-		walletAddress: '',
-		coinbase: '',
 		tokenName: '',
 		tokenId: daTokenId,
 		tokenAddress: '',
@@ -47,22 +42,18 @@ class AboutScreen extends React.Component {
 			if(contract !== '') {
 				//name
 				contract.name().then(function(result){
-					const tokenName = result[0];
 					self.setState({tokenName: result});
 				});
 				//symbol
 				contract.symbol().then(function(result){
-					const tokenSymbol = result[0];
 					self.setState({tokenSymbol: result});
 				});
 				//decimals
 				contract.decimals().then(function(result){
-					const tokenDecimals = result[0];
 					self.setState({tokenDecimals: result.toString()});
 				});
 				//version
 				contract.version().then(function(result){
-					//const tokenVersion = result[0];
 					self.setState({tokenVersion: result});
 				});
 				//my total amount
@@ -76,7 +67,6 @@ class AboutScreen extends React.Component {
 			}
 		}
 		catch(error) {
-			this.setState({hasWallet: false});
 			this.setState({message: error});
 		}
 	}
@@ -85,7 +75,7 @@ class AboutScreen extends React.Component {
 		return (
 			<ScrollView style={styles.container}>
 				<Text style={styles.baseText}>
-					<Image source={require('../img/beeldmerk_30x32.png')} style={{width: 120, height: 128}} />
+					<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
 					<Text style={styles.header_h4}> The Foundation {'\n'}{'\n'}</Text>
 					  Chains of Freedom is a foundation, registered in The Netherlands. CoF aims to give everyone 
 					  the opportunity to make transparent and secure donations to charities. 

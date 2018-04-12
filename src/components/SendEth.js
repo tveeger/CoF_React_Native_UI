@@ -33,31 +33,25 @@ class SendEth extends React.Component {
 		try {
 			const self = this;
 			let mnemonic = await AsyncStorage.getItem('mnemonic');
-			if (mnemonic !== null){
-				wallet = ethers.Wallet.fromMnemonic(mnemonic);
-				wallet.provider = etherscanProvider;
-				this.setState({hasWallet: true});
-				this.setState({walletAddress: wallet.address});
-			}
-			let txCount = 0;
-			let etherString = '';
+
+			let etherAmount = '';
+			walletAddress = this.state.walletAddress;
+			this.setState({hasWallet: true});
 
 			//transaction number
 			if (wallet !== '') {
-				let tranactionCount = wallet.getTransactionCount('latest'); //nonce
-				tranactionCount.then(function(count) {
-					txCount = count;
-					self.setState({nonce: txCount.toString()});
+				//transaction number (nonce)
+				wallet.getTransactionCount('latest').then(function(count) {
+					self.setState({nonce: count.toString()});
 				});
 
-				let balancePromise = etherscanProvider.getBalance(wallet.address, 'latest');
-				balancePromise.then(function(balance) {
-					etherString = ethers.utils.formatEther(balance);
+				etherscanProvider.getBalance(wallet.address, 'latest').then(function(balance) {
+					etherAmount = ethers.utils.formatEther(balance);
 					if (balance !== 0) {
-						self.setState({ethBalance: etherString});
+						self.setState({ethBalance: etherAmount});
 					} else {
 						self.setState({message: "Your balance is too low. Please send some Eths to this wallet account."});
-						self.setState({ethBalance: etherString});
+						self.setState({ethBalance: etherAmount});
 					}
 				});
 			}
@@ -70,6 +64,7 @@ class SendEth extends React.Component {
 
 	componentWillMount() {
 		let self = this;
+		this.setState({walletAddress: wallet.address});
 		self.getWalletInfo();
 	}
 

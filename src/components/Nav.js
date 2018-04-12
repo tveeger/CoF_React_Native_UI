@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Button, Image, AsyncStorage, TouchableHighlight, View, ScrollView, Text, Modal, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { StackNavigator, TabNavigator } from 'react-navigation';
 import ethers from 'ethers';
+import metacoin_artifacts from '../contracts/EntboxContract.json';
+import Connector from './Connector.js';
 import HomeScreen from './HomeScreen.js';
 import SendEth from './SendEth.js';
 import SendToken from './SendToken.js';
@@ -21,6 +23,7 @@ class Nav extends React.Component {
 		super(props);
 		this.state = {
 			hasWallet: false,
+			walletAddress: '',
 			modalVisible: false,
 			message: '',
 			modalMessage: '',
@@ -53,9 +56,8 @@ class Nav extends React.Component {
 
 	componentWillMount() {
 		let self = this;
-		if (!self.state.hasWallet) {
-			self.getMnemonic();
-		}
+		self.setState({walletAddress: wallet.address});
+		self.getMnemonic();
 	}
 
 	componentWillUnmount() {

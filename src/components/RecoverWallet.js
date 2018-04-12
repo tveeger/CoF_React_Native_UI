@@ -60,7 +60,6 @@ class RecoverWalletForm extends React.Component {
 			self.setState({walletAddress: wallet.address});
 			self.setState({isBusy: false});
 			self.setState({mnemonic: ''});
-			//self.getMnemonic();
 		}
 	}
 	

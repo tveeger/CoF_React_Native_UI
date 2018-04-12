@@ -4,7 +4,6 @@ import { RadioButtons, SegmentedControls } from 'react-native-radio-buttons';
 import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-//import BirdlandToken from '../contracts/BirdlandToken.json';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
 wallet = '';
 
@@ -19,6 +18,7 @@ class SendToken extends React.Component {
 
 		this.state = {
 			hasWallet: false,
+			walletAddress: '',
 			ethBalance: '',
 			tokenBalance: '',
 			tokenSymbol: '',
@@ -43,12 +43,9 @@ class SendToken extends React.Component {
 		try {
 			const self = this;
 			let mnemonic = await AsyncStorage.getItem('mnemonic');
-			if (mnemonic !== null){
-				wallet = ethers.Wallet.fromMnemonic(mnemonic);
-				wallet.provider = etherscanProvider;
-				self.setState({hasWallet: true});
-				self.setState({walletAddress: wallet.address});
-			}
+
+			walletAddress = self.state.walletAddress;
+			self.setState({hasWallet: true});
 			const tokenAddress = daTokenAddress;
 			contract = new ethers.Contract(tokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
@@ -78,8 +75,7 @@ class SendToken extends React.Component {
 				});
 
 				//transaction number
-				let tranactionCount = wallet.getTransactionCount('latest'); //nonce
-				tranactionCount.then(function(count) {
+				wallet.getTransactionCount('latest').then(function(count) {
 					txCount = count;
 					self.setState({nonce: txCount.toString()});
 				});
@@ -93,6 +89,7 @@ class SendToken extends React.Component {
 
 	componentWillMount() {
 		let self = this;
+		this.setState({walletAddress: wallet.address});
 		self.getWalletInfo();
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
@@ -136,6 +133,12 @@ class SendToken extends React.Component {
 	}
 
 	emitSend() {
+		/*
+		TODO: transfer(to, value) i.p.v.configDataString()
+		let transferToAddress = this.state.transferToAddress;
+		const iface = new ethers.Interface(metacoin_artifacts);
+		let transferDets = iface.functions.transfer(transferToAddress, amount);
+		*/
 		let self = this;
 		if(wallet !== '') {
 			wallet.provider = etherscanProvider;
@@ -285,14 +288,12 @@ class SendToken extends React.Component {
 			accessibilityLabel="Submit"
 			onPress = { ()=> this.emitSend()}
 		/>
-		<Text style={styles.baseText}>{'\n'}
-			{this.state.isSigned && <Text><Ionicons name={'ios-cog-outline'} size={26} style={styles.icon} /> Just a minute. Your transaction will be mined now...</Text>}
-			{this.state.isTransferSuccess && <Text style={styles.prompt}>Hash is mined:{'\n'} </Text>}
-			{this.state.isTransferSuccess && <Text>{this.state.submitMessage}{'\n'}</Text>}
-			{this.state.isValidAddress && <Text style={styles.errorText}>Not a valid address{'\n'}</Text>}
-			<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>
-			
-		</Text>
+		{this.state.isSigned && <Text>Just a minute. Your transaction will be mined now...</Text>}
+		{this.state.isSigned && <ActivityIndicator size="large" color="#8192A2" />}
+		{this.state.isTransferSuccess && <Text style={styles.prompt}>Hash is mined:{'\n'} </Text>}
+		{this.state.isTransferSuccess && <Text>{this.state.submitMessage}{'\n'}</Text>}
+		{this.state.isValidAddress && <Text style={styles.errorText}>Not a valid address{'\n'}</Text>}
+		<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>		
       </ScrollView>
 
     );
