@@ -15,16 +15,11 @@ class RedeemScreen extends React.Component {
 	super(props);
 
 	this.state = {
-		hasWallet: false,
 		walletAddress: '',
 		tokenAddress: '',
 		tokenSymbol: '',
 		tokenBalance: 0,
 		transferAmount: 0,
-		walletEuroAmount: 0,
-		totalDetsAmount: 0,
-		tokenCreatorFromReceipt: '',
-		tokenCreatedStatusFromReceipt: false,
 		detsDestroyer: '',
 		getDetsDestroyed: 0,
 		isDetsDestroyed: false,
@@ -38,6 +33,26 @@ class RedeemScreen extends React.Component {
 		nonce: '',
 		redeemId: '',
 		};
+
+		this.socket = new WebSocket('ws://45.32.186.169:28475');
+		//this.socket = new WebSocket('ws://127.0.0.1:28475');
+		//this.socket = new WebSocket('ws://echo.websocket.org'); //test
+		this.socket.onopen = () => {
+			this.setState({connected:true})
+		};
+		this.socket.onmessage = (e) => {
+		    //console.log(e.data);
+			this.setState({incoming:e.data});
+		};
+		this.socket.onerror = (e) => {
+		    //console.log(e.message);
+			this.setState({errorMessage:e.message});
+		};
+		this.socket.onclose = (e) => {
+			this.setState({connected:false})
+			console.log(e.code, e.reason);
+		};
+		this.sendRedeemEuros = this.sendRedeemEuros.bind(this);
 	}
 
 	componentWillMount() {
@@ -58,12 +73,10 @@ class RedeemScreen extends React.Component {
 	getWalletInfo = async () => {
 		try {
 			const self = this;
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
-
-			self.setState({hasWallet: true});
-			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
+			contract = await new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
-			let tokenId = daTokenId;
+			self.setState({hasWallet: true});
+			
 			let redeemId = self.state.redeemId;
 			walletAddress = this.state.walletAddress;
 			let txCount = 0;
@@ -73,22 +86,9 @@ class RedeemScreen extends React.Component {
 				contract.symbol().then(function(result){
 					self.setState({tokenSymbol: result});
 				});
-				//get token creator from receipt
-				contract.getTokenCreatorFromReceipt(tokenId).then(function(result){
-					self.setState({tokenCreatorFromReceipt: result});
-				});
 				//balanceOf getDetsBalance
 				contract.getDetsBalance(walletAddress).then(function(result){
 					self.setState({tokenBalance: parseInt(result)});
-				});
-				//token created status
-				contract.getTokenCreatedStatusFromReceipt(tokenId).then(function(result){
-					self.setState({tokenCreatedStatusFromReceipt: result});
-				});
-				//nonce
-				wallet.getTransactionCount('latest').then(function(count) {
-					txCount = count;
-					self.setState({nonce: txCount.toString()});
 				});
 				//getDetsDestroyer(redeemId)
 				contract.getDetsDestroyer(redeemId).then(function(result) {
@@ -98,7 +98,10 @@ class RedeemScreen extends React.Component {
 				contract.getDetsDestroyed(redeemId).then(function(result) {
 					self.setState({getDetsDestroyed: parseInt(result)});
 				});
-
+				//transaction nonce
+				wallet.getTransactionCount('latest').then(function(count) {
+					self.setState({nonce: count.toString()});
+				});
 			}
 		}
 		catch(error) {
@@ -112,48 +115,55 @@ class RedeemScreen extends React.Component {
 		 
 		if(amount > tokenBalance) {
 			this.setState({message: "DETs amount too large "});
+			return 0;
 		} else {
-			this.setState({message: ""});
+			return amount;
 		}
+
 	}
 
 	sendRedeemEuros() {
-		let tokenBalance = this.state.tokenBalance;
-		let transferAmount = this.state.transferAmount;
-		let iban = this.state.iban;
-		let walletAddress = this.state.tokenCreatorFromReceipt;
-		const tokenAddress = daTokenAddress;
-		wallet.provider = etherscanProvider;
-		var iface = new ethers.Interface(metacoin_artifacts);
-		let nonce = this.state.nonce;
-		let redeemId = Math.random().toString(16).slice(2);
-		this.setState({redeemId: redeemId});
+		const self = this;
+		let tokenBalance = self.state.tokenBalance;
+		let transferAmount = self.state.transferAmount;
+		let checkedAmount = self.checkBalance(self.state.transferAmount);
+		let transferAmountBN = ethers.utils.bigNumberify(checkedAmount);
+		if (checkedAmount > 0) {
+			let iban = self.state.iban;
+			let walletAddress = self.state.walletAdress;
+			const tokenAddress = daTokenAddress;
+			wallet.provider = etherscanProvider;
+			var iface = new ethers.Interface(metacoin_artifacts);
+			let nonce = self.state.nonce;
+			let redeemId = Math.random().toString(16).slice(2);
+			self.setState({redeemId: redeemId});
 
-		let destroyIface = iface.functions.destroyDets(redeemId, transferAmount, iban);
+			let destroyIface = iface.functions.destroyDets(redeemId, transferAmountBN, iban);
 
-		var tx = {
-			from: walletAddress,
-			to: tokenAddress,
-			value: '0x00',
-			nonce: ethers.utils.bigNumberify(nonce),
-			gasPrice: ethers.utils.bigNumberify(2000000000),
-			gasLimit: ethers.utils.bigNumberify(185000),
-			data: destroyIface.data,
-		}
+			var tx = {
+				from: walletAddress,
+				to: tokenAddress,
+				value: '0x00',
+				nonce: ethers.utils.bigNumberify(nonce),
+				gasPrice: ethers.utils.bigNumberify(2000000000),
+				gasLimit: ethers.utils.bigNumberify(185000),
+				data: destroyIface.data,
+			}
 
-		let signedTransaction = wallet.sign(tx);
-		this.setState({isSigned: true});
-		this.setState({infoMessage: "Just a minute. Your transaction will be mined now..."});
-		wallet.provider.sendTransaction(signedTransaction).then(function(hash) {
-			wallet.provider.waitForTransaction(hash).then(function(transaction) {
-				this.setState({infoMessage: "Your DET tokens are redeemed."});
-				this.setState({isSigned: false});
-				this.setState({isTransferSuccess: true});
-				this.setState({hash: hash.toString()});
-				this.getWalletInfo();
+			let signedTransaction = wallet.sign(tx);
+			self.setState({isSigned: true});
+			self.setState({infoMessage: "Just a minute. Your transaction will be mined now..."});
+			wallet.provider.sendTransaction(signedTransaction).then(function(hash) {
+				wallet.provider.waitForTransaction(hash).then(function(transaction) {
+					self.socket.send(signedTransaction); //TODO
+					self.setState({infoMessage: "Your DET tokens are redeemed."});
+					self.setState({isSigned: false});
+					self.setState({isTransferSuccess: true});
+					self.setState({hash: hash.toString()});
+					self.getWalletInfo();
+				});
 			});
-		});
-
+		}
 	}
 
   	render() {
@@ -167,7 +177,7 @@ class RedeemScreen extends React.Component {
 				<Text style={styles.baseText}>					
 					<Text style={styles.header_h4}> Redeem Euros {'\n'}{'\n'}</Text>
 					<Text style={styles.prompt}>Your DET balance: </Text>
-					<Text>{this.state.tokenSymbol} {this.state.tokenBalance} Nonce: {this.state.nonce}{'\n'}</Text>
+					<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'}</Text>
 					<Text style={styles.prompt}></Text>
 				</Text>
 				<TextInput
@@ -176,9 +186,8 @@ class RedeemScreen extends React.Component {
 					placeholder = "Amount of DET tokens"
 					placeholderTextColor = "#A0B5C8"
 					keyboardType={'numeric'}
-					maxLength = {4}
-					//onChangeText={(transferAmount) => this.setState({transferAmount})}
-					onChangeText={(transferAmount) => this.checkBalance({transferAmount})}
+					maxLength = {8}
+					onChangeText={(transferAmount) => this.setState({transferAmount})}
 				/>
 				<TextInput
 					style={styles.input}
@@ -198,6 +207,7 @@ class RedeemScreen extends React.Component {
 				{this.state.isTransferSuccess && <Text style={styles.infoText}>{'\n'}Transaction hash: {this.state.hash}</Text>}
 				<Text style={styles.infoText}>{'\n'}{this.state.infoMessage}</Text>
 				<Text style={styles.errorText}>{this.state.message}</Text>
+				
 			</ScrollView>
 		);
     }

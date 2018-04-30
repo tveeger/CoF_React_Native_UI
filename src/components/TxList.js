@@ -26,9 +26,9 @@ class TxList extends React.Component {
   getTxList = async () => {
   	let self = this;
     let offset = self.state.offset;
-    const walletAddress = "0x37779Fb61a1d24bEE94Ca8fd2268Eb0ed72d9dB5";// self.state.walletAddress;
+    //http://rinkeby.etherscan.io/api?module=account&action=txlist&address=0x37779Fb61a1d24bEE94Ca8fd2268Eb0ed72d9dB5&startblock=0&endblock=99999999&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV
     const etherscanUrl = "http://rinkeby.etherscan.io/api?module=account&action=txlist&address=" + wallet.address + "&startblock=0&endblock=99999999&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV";
-    //return fetch('http://rinkeby.etherscan.io/api?module=account&action=txlist&address=0x83fb0a6537f5ad53742aa6bf86e54db369bbd0f6&startblock=0&endblock=99999999&page=1&offset=99&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV') //with pagination
+    //const etherscanUrl= "http://rinkeby.etherscan.io/api?module=account&action=txlist&address=" + wallet.address + "&startblock=0&endblock=99999999&page=1&offset=99&sort=asc&apikey=I1SAN6UTWZ644VM5X3GHEVWG1RD9ADFAHV"; //with pagination
     return fetch(etherscanUrl) 
       .then((response) => response.json()) 
       .then((responseJson) => { 
@@ -50,23 +50,22 @@ class TxList extends React.Component {
 
     renderItem = ({item}) => {
 		let inputString = item.input;
-		const walletAddress = this.state.walletAddress;
+		const walletAddress = wallet.address;
+		if(inputString.length > 1) {
 		//const fromAddress = this.state.walletAddress;
 		const fromAddress = walletAddress;//"0x83fb0a6537f5ad53742aa6bf86e54db369bbd0f6";
 		let filteredTo = '0x' + inputString.substring(34,74);
 		let filteredAmt = '0x' + inputString.substring(74,138);
 
 		//if(inputString.substring(0,10) == '0xa9059cbb' && item.from == fromAddress && item.to == daTokenAddress.toLowerCase()) {
-		if(inputString.substring(0,2) == '0x' ) {
-		//if(inputString.length > 2) {
+		//if(inputString.substring(0,2) == '0x') {
+		
 			let filteredAmtInt = ethers.utils.bigNumberify(filteredAmt).toString();
-		// if (filteredAmtInt.length < 6) {
 			return (
 				<Text style={styles.row}><Text style={styles.prompt}>to:</Text> {filteredTo}{'\n'}<Text style={styles.prompt}>amount:</Text> {filteredAmtInt} tokens</Text>
-				//<Text style={styles.row}>{inputString.substring(0,138)}</Text>
+				//<Text style={styles.row}>{inputString} Len.: {inputString.length}</Text>
 			)
-		//}
-    }
+    	}
   }
 
 	render() {

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, AsyncStorage } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
 import metacoin_artifacts from '../contracts/BirdlandToken.json';
@@ -29,6 +29,7 @@ class BuyScreen extends React.Component {
 			confirmMessage: '',
 			incoming: '',
 			errorMessage: '',
+			daTokenId: '',
 		};
 
 		this.socket = new WebSocket('ws://45.32.186.169:28475');
@@ -62,6 +63,7 @@ class BuyScreen extends React.Component {
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
 		self.setState({isInitated:true});
+		self.getTokenId();
 	}
 
 	componentWillUnmount() {
@@ -75,6 +77,21 @@ class BuyScreen extends React.Component {
 		if(submitCode != '') {
 			this.setState({submitCode: submitCode});
 			this.sendMessage(submitCode);
+			this.getTokenId();
+		}
+	}
+
+	getTokenId = async () => {
+		try {
+			let daTokenId = await AsyncStorage.getItem('daTokenId');
+			if(daTokenId == null) {
+				let submitCode = this.state.submitCode;
+				if (submitCode != '') {
+					AsyncStorage.setItem('daTokenId', this.state.submitCode);
+				}
+			}	
+		} catch(error) {
+
 		}
 	}
 

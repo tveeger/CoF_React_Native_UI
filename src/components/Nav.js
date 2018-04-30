@@ -55,9 +55,8 @@ class Nav extends React.Component {
 	}
 
 	componentWillMount() {
-		let self = this;
-		self.setState({walletAddress: wallet.address});
-		self.getMnemonic();
+		this.setState({walletAddress: wallet.address});
+		this.getMnemonic();
 	}
 
 	componentWillUnmount() {
@@ -129,7 +128,6 @@ class Nav extends React.Component {
 				
 				{this.state.hasWallet && <HomeScreen/>}
 				{!this.state.hasWallet && <Text>{'\n'}{'\n'}</Text>}
-				{!this.state.hasWallet && <ActivityIndicator size="large" color="#8192A2" />}
 
 				{this.state.hasWallet && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
@@ -143,37 +141,37 @@ class Nav extends React.Component {
 			
 			<View>
 				<View style={styles.buttonContainer}>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('BuyScreen')}}>
 						<Text style = {styles.hyperLink}> Fetch </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('RedeemScreen')}}>
 						<Text style = {styles.hyperLink}> Redeem </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('TxList')}}>
 						<Text style = {styles.hyperLink}> List </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('AdminScreen')}}>
 						<Text style = {styles.hyperLink}> Admin </Text>
 					</TouchableHighlight>
 				</View>
 				<View style={styles.buttonContainer}>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('TermsScreen')}}>
 						<Text style = {styles.hyperLink}> Terms </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('CharitiesScreen')}}>
 						<Text style = {styles.hyperLink}> Charities </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('AboutScreen')}}>
 						<Text style = {styles.hyperLink}> About </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton2} onPress = {() => {	}}>
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {	}}>
 						<Text style = {styles.hyperLink}> Help </Text>
 					</TouchableHighlight>
 				</View>
@@ -246,25 +244,12 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		padding: 10,
 	},
-	icon: {
-		width: 26,
-		height: 26,
-	},
 	buttonContainer: {
 		flexDirection: 'row',
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
 	smallButton: {
-		backgroundColor: '#BCB3A2',
-		padding: 4,
-		width: 150,
-		margin: 20,
-		borderRadius: 8,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	smallButton2: {
 		backgroundColor: '#BCB3A2',
 		padding: 8,
 		width: 100,
@@ -282,27 +267,8 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
-	mediumButton: {
-		backgroundColor: '#BBB',
-		padding: 4,
-		width: 250,
-		margin: 20,
-		borderRadius: 8,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	buttonText: {
-		textAlign: 'center',
-		color: 'whitesmoke',
-		fontSize: 16,
-		fontWeight: 'bold'
-	},
   prompt: {
 		color: '#BCB3A2',
-	},
-	icon: {
-		width: 30,
-		height: 32,
 	},
 	modal: {
 		flex: 1,
@@ -314,10 +280,6 @@ const styles = StyleSheet.create({
 		color: 'whitesmoke',
 		fontSize: 16,
 		fontWeight: 'bold'
-	},
-	errorText: {
-		marginTop: 10,
-		color: 'red'
 	},
 });
 

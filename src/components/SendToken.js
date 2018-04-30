@@ -5,7 +5,6 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
-wallet = '';
 
 class SendToken extends React.Component {
   static navigationOptions = {
@@ -42,42 +41,29 @@ class SendToken extends React.Component {
   	getWalletInfo = async () => {
 		try {
 			const self = this;
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
+			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
+			contract.connect(etherscanProvider);
+
 
 			walletAddress = self.state.walletAddress;
 			self.setState({hasWallet: true});
-			const tokenAddress = daTokenAddress;
-			contract = new ethers.Contract(tokenAddress, metacoin_artifacts, etherscanProvider);
-			contract.connect(etherscanProvider);
-			let tokenBalance = 0;
-			let tokenSymbol = '';
-			let txCount = 0;
+			self.setState({isBusy: true});
 
+			if (wallet !== '') {
+				//transaction number
+				wallet.getTransactionCount('latest').then(function(count) {
+					self.setState({nonce: count.toString()});
+				});
+			}
+			
 			if(contract !== '') {
 				//symbol
 				contract.symbol().then(function(result){
 					self.setState({tokenSymbol: result});
 				});
-			}
-
-			if (wallet !== '') {
-				//token balance
-				const tokenData = "0x70a08231000000000000000000000000" + wallet.address.substr(2); //
-				etherscanProvider.call({
-					to: tokenAddress,
-					data: tokenData
-				}).then(function(result) {
-					tokenBalance = ethers.utils.bigNumberify(result);
-					self.setState({tokenBalance: tokenBalance.toString()});
-					if (tokenBalance <= 0) {
-						self.setState({message: "You have insufficient amount of tokens to send."})
-					}
-				});
-
-				//transaction number
-				wallet.getTransactionCount('latest').then(function(count) {
-					txCount = count;
-					self.setState({nonce: txCount.toString()});
+				//balanceOf getDetsBalance
+				contract.getDetsBalance(wallet.address).then(function(result){
+					self.setState({tokenBalance: parseInt(result)});
 				});
 			}
 		}
@@ -92,7 +78,7 @@ class SendToken extends React.Component {
 		this.setState({walletAddress: wallet.address});
 		self.getWalletInfo();
 		const tokenAddress = daTokenAddress;
-		self.setState({tokenAddress: tokenAddress});
+		this.setState({tokenAddress: tokenAddress});
 		self.getCharityList();
 	}
 

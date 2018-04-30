@@ -25,17 +25,6 @@ class RecoverWalletForm extends React.Component {
 		};
 	}
 
-	getMnemonic = async () => {
-		try {
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
-			wallet = ethers.Wallet.fromMnemonic(mnemonic);
-			wallet.provider = etherscanProvider;
-		}
-		catch(error) {
-			this.setState({message: 'Error: ' + error});
-		}
-	}
-
 	componentWillMount() {
 
 	}
@@ -45,26 +34,24 @@ class RecoverWalletForm extends React.Component {
 	}
 
 	emitMnemonic() {
-		const self = this;
-		self.setState({isBusy: true});
-		let thisMnemonic = self.state.mnemonic;
+		this.setState({isBusy: true});
+		let thisMnemonic = this.state.mnemonic;
 		const HDNode = ethers.HDNode;
 
 		let isValidMnemonic = HDNode.isValidMnemonic(thisMnemonic);
+		
 		if (isValidMnemonic) {
-			self.setState({walletSaved: true});
+			this.setState({walletSaved: true});
 			wallet = ethers.Wallet.fromMnemonic(thisMnemonic);
 			wallet.provider = etherscanProvider;
+			this.setState({walletAddress: wallet.address});
 
 			AsyncStorage.setItem('mnemonic', thisMnemonic);
-			self.setState({walletAddress: wallet.address});
-			self.setState({isBusy: false});
-			self.setState({mnemonic: ''});
+			this.setState({isBusy: false});
+			//this.setState({mnemonic: ''});
+		} else {
+			this.setState({message: "Invalid mnemonic"});
 		}
-	}
-	
-	renderItem = ({item}) => {
-		return (<Text style={styles.row}>{item}</Text>)
 	}
 
   render() {
@@ -94,12 +81,11 @@ class RecoverWalletForm extends React.Component {
 		/>
 
 		<Text style={styles.baseText}>
-			<Text style={styles.prompt}>Your wallet address:{'\n'}</Text>
-			<Text>{this.state.walletAddress}{'\n'}</Text>
 			<Text style={styles.prompt}>Mnemonic is legit: </Text>
 			{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
 		</Text>
 		{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
+		<Text style={styles.errorText}>{this.message}{'\n'}</Text>
       </ScrollView>
 
     );
@@ -139,14 +125,6 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		marginBottom: 15,
 		color: '#999999',
-	},
-	row: {
-		padding: 10,
-		marginBottom: 5,
-		marginRight: 5,
-		color: '#eee',
-		backgroundColor: '#8192A2',
-		fontSize: 16,
 	},
 	icon: {
 		color: '#2D4866',

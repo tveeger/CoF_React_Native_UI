@@ -22,12 +22,12 @@ class CreateTokensScreen extends React.Component {
 			tokenAddress: '',
 			tokenBalance: 0,
 			errorMessage: '',
-			euroAmountFromReceipt: 0,
-			detsAmountFromReceipt: 0,
+			euroAmountFromReceipt: null,
 			tokenCreatedStatusFromReceipt: false,
 			tokenCreatorFromReceipt: '',
 			nonce: '',
 			submitMessage: '',
+			isBusy: false,
 		};
 
 	}
@@ -35,14 +35,20 @@ class CreateTokensScreen extends React.Component {
 	getWalletInfo = async () => {
 		try {
 			const self = this;
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
-
-			self.setState({hasWallet: true});
 			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
-			let tokenId = daTokenId;
-			walletAddress = this.state.walletAddress;
-			let txCount = 0;
+
+			let tokenId = self.state.tokenId;
+			walletAddress = self.state.walletAddress;
+			self.setState({hasWallet: true});
+			self.setState({isBusy: true});
+
+			if (wallet !== '') {;
+				//transaction number
+				wallet.getTransactionCount('latest').then(function(count) {
+					self.setState({nonce: count.toString()});
+				});
+			}
 
 			if(contract !== '') {
 				//get token created from receipt
@@ -54,10 +60,6 @@ class CreateTokensScreen extends React.Component {
 					self.setState({euroAmountFromReceipt: parseInt(result)});
 					self.checkEuroBalance();
 				});
-				//get DET amount from receipt
-				contract.getDetsAmountFromReceipt(tokenId).then(function(result){
-					self.setState({detsAmountFromReceipt: parseInt(result)});
-				});
 				//get token creator from receipt
 				contract.getTokenCreatorFromReceipt(tokenId).then(function(result){
 					self.setState({tokenCreatorFromReceipt: result});
@@ -66,22 +68,30 @@ class CreateTokensScreen extends React.Component {
 				contract.getDetsBalance(walletAddress).then(function(result){
 					self.setState({tokenBalance: parseInt(result)});
 				});
-				//transaction number (nonce)
-				wallet.getTransactionCount('latest').then(function(count) {
-					self.setState({nonce: count.toString()});
-				});
-				
 			}
+		}
+		catch(error) {
+			this.setState({hasWallet: false});
+			this.setState({message: error});
+		}
+	}
+
+	getTokenId = async () => {
+		try {
+			let daTokenId = await AsyncStorage.getItem('daTokenId');
+			daTokenId = "4a4fbcf3";
+			this.setState({tokenId: daTokenId});
+			this.getWalletInfo();
 		}
 		catch(error) {
 			this.setState({message: error});
 		}
 	}
 
-
 	componentWillMount() {
 		this.setState({walletAddress: wallet.address});
-		this.getWalletInfo();
+		//this.getWalletInfo();
+		this.getTokenId();
 	}
 
 	componentWillUnmount() {
@@ -94,15 +104,17 @@ class CreateTokensScreen extends React.Component {
 		let tokenCreatedStatus = this.state.tokenCreatedStatusFromReceipt;
 		if(tokenCreatedStatus) {
 			this.setState({euroBalanceMessage: ""});
+			this.setState({isBusy: false});
 		} else {
 			let euroAmountFromReceipt = this.state.getEuroAmountFromReceipt;
+			this.setState({isBusy: false});
 			this.setState({euroBalanceMessage: "You have transferred Euros to your wallet and may now convert it to DET tokens. Your currentbalance is: "});
 		}
 	}
 
 	createDets() {
 		let self = this;
-		const tokenId = daTokenId;
+		const tokenId = self.state.tokenId;
 
 		if(wallet !== '') {
 			wallet.provider = etherscanProvider;
@@ -146,6 +158,7 @@ class CreateTokensScreen extends React.Component {
 					{!this.state.tokenCreatedStatusFromReceipt && <Text style={styles.header_h4}>&euro; {this.state.euroAmountFromReceipt} {'\n'}{'\n'}</Text>}
 					{!this.state.tokenCreatedStatusFromReceipt && <Text>You will receive 100 DET for each Euro.</Text> }
 				</Text>
+				{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
 				{!this.state.tokenCreatedStatusFromReceipt && <Button 
 					color="#BCB3A2"
 					title="Create tokens"

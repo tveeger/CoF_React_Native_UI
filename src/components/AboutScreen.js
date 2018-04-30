@@ -15,7 +15,7 @@ class AboutScreen extends React.Component {
 
 	this.state = {
 		tokenName: '',
-		tokenId: daTokenId,
+		tokenId: '',
 		tokenAddress: '',
 		tokenSymbol: '',
 		tokenDecimals: '',
@@ -31,6 +31,7 @@ class AboutScreen extends React.Component {
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
 		self.getWalletInfo();
+		self.getTokenId();
 	}
 
 	getWalletInfo = async () => {
@@ -65,6 +66,16 @@ class AboutScreen extends React.Component {
 					self.setState({totalDetsSupply: result.toString()});
 				});
 			}
+		}
+		catch(error) {
+			this.setState({message: error});
+		}
+	}
+
+	getTokenId = async () => {
+		try {
+			let daTokenId = await AsyncStorage.getItem('daTokenId');
+			this.setState({tokenId: daTokenId});
 		}
 		catch(error) {
 			this.setState({message: error});

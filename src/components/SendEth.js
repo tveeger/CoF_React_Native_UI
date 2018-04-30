@@ -47,11 +47,11 @@ class SendEth extends React.Component {
 
 				etherscanProvider.getBalance(wallet.address, 'latest').then(function(balance) {
 					etherAmount = ethers.utils.formatEther(balance);
-					if (balance !== 0) {
-						self.setState({ethBalance: etherAmount});
+					if (balance > 0) {
+						self.setState({ethBalance: etherAmount.toString()});
 					} else {
 						self.setState({message: "Your balance is too low. Please send some Eths to this wallet account."});
-						self.setState({ethBalance: etherAmount});
+						self.setState({ethBalance: etherAmount.toString()});
 					}
 				});
 			}
