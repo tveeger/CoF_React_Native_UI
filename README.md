@@ -2,6 +2,8 @@ react-native init -project name-
 
 copy src dir in root folder
 
+cd -project name-
+
 add in package.json under "dependencies":
 
 	"ethers": "^2.1.3",
@@ -14,11 +16,11 @@ add in package.json under "dependencies":
     
     "react-navigation": "^1.0.0-beta.19"
     
-cd -project name-
-	
 npm install
 
 react-native link
+
+rm ./node_modules/react-native/local-cli/core/__fixtures__/files/package.json
 
 react-native start
 
@@ -36,6 +38,9 @@ adb reverse tcp:8081 tcp:8081
 
 react-native run-android
 
+
+
 Test Token on Rinkeby
 
-Birdland (BLT): 0x54817cFEB229B7ABf8190E8E4AA4eD5E3181f712
+Chains of Freedom Token (DET): 0x492b5F5Eb71c56df81A0E92DAC653d3f0Bdfb896
+
