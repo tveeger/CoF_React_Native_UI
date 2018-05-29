@@ -42,6 +42,7 @@ class TxList extends React.Component {
 
   componentWillMount() {
   	let self = this;
+  	wallet.provider = etherscanProvider;
 
   	self.setState({walletAddress: wallet.address});
     self.getTxList();
@@ -57,14 +58,13 @@ class TxList extends React.Component {
 		let filteredTo = '0x' + inputString.substring(34,74);
 		let filteredAmt = '0x' + inputString.substring(74,138);
 
-		//if(inputString.substring(0,10) == '0xa9059cbb' && item.from == fromAddress && item.to == daTokenAddress.toLowerCase()) {
-		//if(inputString.substring(0,2) == '0x') {
-		
-			let filteredAmtInt = ethers.utils.bigNumberify(filteredAmt).toString();
-			return (
-				<Text style={styles.row}><Text style={styles.prompt}>to:</Text> {filteredTo}{'\n'}<Text style={styles.prompt}>amount:</Text> {filteredAmtInt} tokens</Text>
-				//<Text style={styles.row}>{inputString} Len.: {inputString.length}</Text>
-			)
+			if(inputString.substring(0,10) == '0xa9059cbb' && item.from == fromAddress.toLowerCase()  && item.to == daTokenAddress.toLowerCase()) {
+				let filteredAmtInt = ethers.utils.bigNumberify(filteredAmt).toString();
+				return (
+					<Text style={styles.row}><Text style={styles.prompt}>to:</Text> {filteredTo}{'\n'}<Text style={styles.prompt}>amount:</Text> {filteredAmtInt} tokens}</Text>
+					//<Text style={styles.row}>{inputString} Len.: {inputString.length}</Text>
+				)
+			}
     	}
   }
 

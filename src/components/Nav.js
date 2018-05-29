@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Button, Image, AsyncStorage, TouchableHighlight, View, ScrollView, Text, Modal, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
-import { StackNavigator, TabNavigator } from 'react-navigation';
+import { StackNavigator, TabNavigator, createTabNavigator } from 'react-navigation';
 import ethers from 'ethers';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
 import Connector from './Connector.js';
@@ -14,15 +14,21 @@ import ChatScreen from './ChatScreen.js';
 import BuyScreen from './BuyScreen.js';
 import AboutScreen from './AboutScreen.js';
 import CharitiesScreen from './CharitiesScreen.js';
-import TermsScreen from './TermsScreen.js';
+import ContactsScreen from './ContactsScreen.js';
 import AdminScreen from './AdminScreen.js';
 import RedeemScreen from './RedeemScreen.js';
 
 class Nav extends React.Component {
+	static navigationOptions = {
+		title: 'Chains of Freedom',
+		tabBarLabel: 'Home'
+	};
+
 	constructor(props) {
 		super(props);
 		this.state = {
 			hasWallet: false,
+			isBusy: false,
 			walletAddress: '',
 			modalVisible: false,
 			message: '',
@@ -31,19 +37,15 @@ class Nav extends React.Component {
 		}
 	}
 
-	static navigationOptions = {
-		title: 'Chains of Freedom',
-		tabBarLabel: 'Home'
-	};
-
 	getMnemonic = async () => {
 		try {
+			this.setState({isBusy: true});
 			let mnemonic = await AsyncStorage.getItem('mnemonic');
 			if (mnemonic !== null){
 				wallet = ethers.Wallet.fromMnemonic(mnemonic);
 				wallet.provider = etherscanProvider;
 				this.setState({hasWallet: true});
-				this.setState({refreshing: false});
+				this.setState({isBusy: false});
 			} else {
 				this.toggleModal(true);
 			}
@@ -60,7 +62,7 @@ class Nav extends React.Component {
 	}
 
 	componentWillUnmount() {
-		this.setState({ modalVisible: true });
+		this.setState({ modalVisible: false });
 	}
 
 	toggleModal(visible) {
@@ -71,7 +73,7 @@ class Nav extends React.Component {
 		AsyncStorage.removeItem('mnemonic');
 		this.setState({hasWallet: false});
 		this.toggleModal(true);
-		this.setState({ modalMessage: 'Your wallet has been deleted but still exists on the blockchain. You can recover it by clicking Recover Wallet.' });
+		this.setState({ modalMessage: 'Your wallet has been removed. You can recover if you have your mnemonic passphrase.' });
 	}
 
 	onRefresh() {
@@ -97,7 +99,7 @@ class Nav extends React.Component {
 					<View style = {styles.modal}>
 						<Text style={styles.header_h4}>Your Wallet</Text>
 						<View style = {styles.textField}>
-							<Text style={styles.prompt}>If there is no wallet installed. {'\n'}Choose if you want to create a new wallet or recover your existing wallet from a saved mnemonic. After deleting your wallet, you can only recover your funds and tokens with the mnemonic phrase you have saved.</Text>
+							<Text style={styles.prompt}>You will need a wallet to get started. {'\n'}You can create a new wallet or recover your previously created wallet. After deleting your wallet, you can only recover your funds and tokens with the mnemonic phrase you have saved.</Text>
 						</View>
 						<Button
 							title="Create new Wallet"
@@ -125,10 +127,9 @@ class Nav extends React.Component {
 						</TouchableHighlight>
 					</View>
 				</Modal>
-				
 				{this.state.hasWallet && <HomeScreen/>}
-				{!this.state.hasWallet && <Text>{'\n'}{'\n'}</Text>}
-
+				<Text>{'\n'}{'\n'}</Text>
+				{this.state.isBusy && <ActivityIndicator/>}
 				{this.state.hasWallet && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
 					<Text style = {styles.hyperLink}> Change Wallet </Text>
@@ -151,7 +152,7 @@ class Nav extends React.Component {
 					</TouchableHighlight>
 					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('TxList')}}>
-						<Text style = {styles.hyperLink}> List </Text>
+						<Text style = {styles.hyperLink}> TX-List </Text>
 					</TouchableHighlight>
 					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('AdminScreen')}}>
@@ -160,8 +161,8 @@ class Nav extends React.Component {
 				</View>
 				<View style={styles.buttonContainer}>
 					<TouchableHighlight style={styles.smallButton} onPress = {() => {
-						navigate('TermsScreen')}}>
-						<Text style = {styles.hyperLink}> Terms </Text>
+						navigate('ContactsScreen')}}>
+						<Text style = {styles.hyperLink}> Contacts </Text>
 					</TouchableHighlight>
 					<TouchableHighlight style={styles.smallButton} onPress = {() => {
 						navigate('CharitiesScreen')}}>
@@ -181,25 +182,20 @@ class Nav extends React.Component {
 	}
 }
 
-const TabNav = TabNavigator({
-	HomeScreen: {
-		screen: Nav,
-		navigationOptions: {
-			tabBarLabel: 'Home'
-			}
-		},
-		SendEth: { screen: SendEth },
-		SendToken: { screen: SendToken },
-		ChatScreen: { screen: ChatScreen }
-		}, {
-		tabBarOptions: {
-			activeTintColor: '#666',
-			inactiveTintColor: '#DDD',
-			showIcon: false,
-			labelStyle: {
-			fontSize: 12,
-		},
-		style: {
+const TabNav = createTabNavigator({
+	HomeScreen: { screen: Nav },
+	SendEth: { screen: SendEth },
+	SendToken: { screen: SendToken },
+	ChatScreen: { screen: ChatScreen }
+	}, {
+	tabBarOptions: {
+		activeTintColor: '#666',
+		inactiveTintColor: '#DDD',
+		showIcon: false,
+		labelStyle: {
+		fontSize: 12,
+	},
+	style: {
 			backgroundColor: '#8192A2',
 		},
 		indicatorStyle: {
@@ -215,7 +211,7 @@ const StackNav = StackNavigator({
   RecoverWalletForm: { screen: RecoverWalletForm},
   BuyScreen: { screen: BuyScreen },
   AboutScreen: { screen: AboutScreen },
-  TermsScreen: { screen: TermsScreen },
+  ContactsScreen: { screen: ContactsScreen },
   AdminScreen: { screen: AdminScreen },
   RedeemScreen: { screen: RedeemScreen },
   CharitiesScreen: { screen: CharitiesScreen }
@@ -267,7 +263,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
-  prompt: {
+  	prompt: {
 		color: '#BCB3A2',
 	},
 	modal: {

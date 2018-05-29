@@ -27,6 +27,8 @@ class RedeemScreen extends React.Component {
 		hash: '',
 		message: '',
 		infoMessage: '',
+		errorMessage: '',
+		incomming: '',
 		iban: '',
 		refreshing: false,
 		isSigned: false,
@@ -122,6 +124,10 @@ class RedeemScreen extends React.Component {
 
 	}
 
+	sendWebsocketMessage() {
+		
+	}
+
 	sendRedeemEuros() {
 		const self = this;
 		let tokenBalance = self.state.tokenBalance;
@@ -176,9 +182,10 @@ class RedeemScreen extends React.Component {
 			}>
 				<Text style={styles.baseText}>					
 					<Text style={styles.header_h4}> Redeem Euros {'\n'}{'\n'}</Text>
+					{!this.state.isSubmitted && <Text style={styles.errorText}>{this.state.errorMessage}{'\n'}{'\n'}</Text>}
+					<Text style={styles.prompt}></Text>
 					<Text style={styles.prompt}>Your DET balance: </Text>
 					<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'}</Text>
-					<Text style={styles.prompt}></Text>
 				</Text>
 				<TextInput
 					style={styles.input}

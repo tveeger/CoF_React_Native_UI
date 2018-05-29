@@ -154,9 +154,9 @@ class CreateTokensScreen extends React.Component {
 			<View>
 				<Text style={styles.baseText}>
 					{!this.state.tokenCreatedStatusFromReceipt && <Text style={styles.header_h4}>{'\n'}{'\n'}Get your DETs{'\n'}</Text>}
-					{!this.state.tokenCreatedStatusFromReceipt && <Text>{'\n'}{this.state.euroBalanceMessage} </Text>}
+					{!this.state.tokenCreatedStatusFromReceipt && <Text style={styles.prompt}>{'\n'}{this.state.euroBalanceMessage}{'\n'} </Text>}
 					{!this.state.tokenCreatedStatusFromReceipt && <Text style={styles.header_h4}>&euro; {this.state.euroAmountFromReceipt} {'\n'}{'\n'}</Text>}
-					{!this.state.tokenCreatedStatusFromReceipt && <Text>You will receive 100 DET for each Euro.</Text> }
+					{!this.state.tokenCreatedStatusFromReceipt && <Text style={styles.prompt}>You will receive 100 DET for each Euro.</Text> }
 				</Text>
 				{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
 				{!this.state.tokenCreatedStatusFromReceipt && <Button 
@@ -167,7 +167,7 @@ class CreateTokensScreen extends React.Component {
 				/> }
 				{this.state.isSigned && <Text> Just a minute. Your transaction will be mined now...</Text>}
 				{this.state.isSigned && <ActivityIndicator size="large" color="#8192A2" />}
-				{this.state.isTransferSuccess && <Text> Transfer Hash: {this.state.submitMessage}</Text>}
+				{this.state.isTransferSuccess && <Text style={styles.prompt}> Transfer Hash: {this.state.submitMessage}</Text>}
 				<Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
 			</View>
 		);

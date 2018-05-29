@@ -3,7 +3,8 @@ import { Button, AsyncStorage, View, ScrollView, Text, StyleSheet, TextInput, Ac
 import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import { StackNavigator } from 'react-navigation';
+import HomeScreen from './HomeScreen.js';
 
 class RecoverWalletForm extends React.Component {
 	static navigationOptions = {
@@ -26,35 +27,43 @@ class RecoverWalletForm extends React.Component {
 	}
 
 	componentWillMount() {
-
+		
 	}
 
 	componentWillUnmount() {
 		this.setState({walletSaved: false});
 	}
 
+	timerElapsed() {
+		this.setState({isBusy: false});
+	}
+
 	emitMnemonic() {
 		this.setState({isBusy: true});
 		let thisMnemonic = this.state.mnemonic;
 		const HDNode = ethers.HDNode;
+		
+		setTimeout(function() { this.timerElapsed(); }.bind(this), 5000);
 
 		let isValidMnemonic = HDNode.isValidMnemonic(thisMnemonic);
 		
 		if (isValidMnemonic) {
-			this.setState({walletSaved: true});
 			wallet = ethers.Wallet.fromMnemonic(thisMnemonic);
 			wallet.provider = etherscanProvider;
 			this.setState({walletAddress: wallet.address});
-
+			
 			AsyncStorage.setItem('mnemonic', thisMnemonic);
+			this.setState({walletSaved: true});
 			this.setState({isBusy: false});
 			//this.setState({mnemonic: ''});
 		} else {
 			this.setState({message: "Invalid mnemonic"});
+			this.setState({isBusy: false});
 		}
 	}
 
   render() {
+  	const {navigate} = this.props.navigation;
     return (
       <ScrollView style={styles.container}>
 		<Text style={styles.baseText}>
@@ -73,24 +82,40 @@ class RecoverWalletForm extends React.Component {
 			blurOnSubmit = {true}
 			onChangeText = {(mnemonic) => this.setState({mnemonic})}
 		/>
-		<Button 
+		{!this.state.walletSaved && <Button 
 			color="#BCB3A2"
 			title="Recover"
 			accessibilityLabel="CreateWallet"
 			onPress = { ()=> this.emitMnemonic()}
-		/>
+		/>}
 
 		<Text style={styles.baseText}>
-			<Text style={styles.prompt}>Mnemonic is legit: </Text>
+			{this.state.walletSaved && <Text style={styles.prompt}>Mnemonic is legit: </Text>}
 			{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
 		</Text>
 		{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
-		<Text style={styles.errorText}>{this.message}{'\n'}</Text>
+		<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>
+		{this.state.walletSaved && <Button 
+			color="#BCB3A2"
+			title="Go Back"
+			accessibilityLabel="Go Back"
+			onPress = { ()=> navigate('HomeScreen')}
+		/>}
       </ScrollView>
 
     );
   }
 };
+
+const StackNav2 = StackNavigator({
+  HomeScreen: { screen: HomeScreen }
+  }, {
+    navigationOptions: {
+      headerTintColor: '#DDD',
+      headerStyle: {backgroundColor: '#8192A2'}
+    }
+  
+});
 
 const styles = StyleSheet.create({
 	container: {

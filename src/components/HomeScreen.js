@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Image, View, ScrollView, Text, StyleSheet, Modal, TouchableHighlight } from 'react-native';
+import { Image, View, ScrollView, Text, StyleSheet, Modal, TouchableHighlight, ActivityIndicator } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -7,17 +7,6 @@ import { NavigationActions } from 'react-navigation';
 import QRcodeWallet from './QRcodeWallet.js';
 
 class HomeScreen extends React.Component {
-  static navigationOptions = {
-	title: 'Home',
-	tabBarLabel: 'Home',
-	tabBarIcon: ({ tintColor }) => (
-		<Image
-			source={require('../img/beeldmerk_30x32_darkblue.png')}
-			style={[styles.tabIcon, {tintColor: tintColor}]}
-		/>
-		),
-	};
-
 	constructor(props) {
 		super(props);
 

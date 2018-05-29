@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Button, AsyncStorage, View, ScrollView, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import ethers from 'ethers';
 import Connector from './Connector.js';
+import HomeScreen from './HomeScreen.js';
+import { StackNavigator } from 'react-navigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 const extractKey = ({value}) => value;
 
@@ -23,26 +25,14 @@ class CreateWalletForm extends React.Component {
 			hasWallet: false,
 			mnemonicCreated: false,
 			walletSaved: false,
+			mnemonicCreatedAndSaved: false,
 			isBusy: false,
 			savedMnemonic: '',
 		};
 	}
 
-	getMnemonic = async () => {
-		try {
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
-			if (mnemonic !== null){
-				this.setState({savedMnemonic: mnemonic});
-			}
-		}
-		catch(error) {
-			this.setState({message: 'Error: ' + error});
-		}
-	}
-
 	componentWillMount() {
 		let self = this;
-		self.getMnemonic();
 	}
 
 	componentWillUnmount() {
@@ -72,14 +62,6 @@ class CreateWalletForm extends React.Component {
 			wallet = ethers.Wallet.fromMnemonic(newMnemonic);
 			wallet.provider = etherscanProvider;
 			AsyncStorage.setItem('mnemonic', newMnemonic);
-			
-			//const SigningKey = ethers._SigningKey;
-			//const privateKey = wallet.privateKey;
-			//const signingKey = new SigningKey(privateKey);
-			//let messageBytes = ethers.utils.toUtf8Bytes(mnemonicString);
-			//let messageDigest = ethers.utils.keccak256(messageBytes);
-			//let signature = signingKey.signDigest(messageDigest);
-
 			self.setState({walletAddress: wallet.address});
 			self.setState({walletSaved: true});
 			self.setState({isBusy: false});
@@ -93,6 +75,7 @@ class CreateWalletForm extends React.Component {
 	}
 
   render() {
+  	const {navigate} = this.props.navigation;
     return (
       <ScrollView style={styles.container}>
 		<Text style={styles.baseText}>
@@ -120,16 +103,22 @@ class CreateWalletForm extends React.Component {
 				keyExtractor={extractKey}
 			/>
 		</View>
-		{this.state.mnemonicCreated && <Button 
+		<Button 
 			color="#BCB3A2"
 			title="Save new Wallet"
 			accessibilityLabel="SaveWallet"
 			onPress = { ()=> this.saveMnemonicWallet()}
-		/>}
+		/>
+		
 		{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
+		{this.state.walletSaved && <Button 
+			color="#BCB3A2"
+			title="Go Back"
+			accessibilityLabel="Go Back"
+			onPress = { ()=> navigate('HomeScreen')}
+		/>}
 		<Text style={styles.baseText}>
-			{this.state.isBusy && <Text style={styles.prompt}>Wallet saved: </Text>}
-			{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
+			{this.state.walletSaved && <Text style={styles.prompt}>Wallet address: {this.state.walletAddress}{'\n'}</Text>}
 			<Text>{this.state.message}{'\n'}</Text>
 		</Text>
       </ScrollView>
@@ -137,6 +126,16 @@ class CreateWalletForm extends React.Component {
     );
   }
 };
+
+const StackNav2 = StackNavigator({
+  HomeScreen: { screen: HomeScreen }
+  }, {
+    navigationOptions: {
+      headerTintColor: '#DDD',
+      headerStyle: {backgroundColor: '#8192A2'}
+    }
+  
+});
 
 const styles = StyleSheet.create({
 	container: {

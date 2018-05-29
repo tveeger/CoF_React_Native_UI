@@ -53,7 +53,6 @@ class AdminScreen extends React.Component {
 	getWalletInfo = async () => {
 		try {
 			const self = this;
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
 			let searchAddress = self.state.searchAddress;
 			self.setState({hasWallet: true});
 			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);

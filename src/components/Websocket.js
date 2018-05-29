@@ -113,11 +113,11 @@ constructor(props) {
 				</View>
 
 				<FlatList
-				style={styles.postItem}
-				data={this.state.posts}
-				renderItem={this.renderItem}
-				keyExtractor={extractKey}
-				inverted={true}
+					style={styles.postItem}
+					data={this.state.posts}
+					renderItem={this.renderItem}
+					keyExtractor={extractKey}
+					inverted={true}
 				/>
 			</ScrollView>
 

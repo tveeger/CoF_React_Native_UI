@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, TextInput, AsyncStorage, Modal, StyleSheet, RefreshControl, ActivityIndicator, TouchableHighlight } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, AsyncStorage, FlatList, Modal, StyleSheet, RefreshControl, ActivityIndicator, TouchableHighlight } from 'react-native';
 import { RadioButtons, SegmentedControls } from 'react-native-radio-buttons';
 import ethers from 'ethers';
 import Connector from './Connector.js';
@@ -9,7 +9,7 @@ import metacoin_artifacts from '../contracts/EntboxContract.json';
 class SendToken extends React.Component {
   static navigationOptions = {
 	title: 'Transfer DET Tokens',
-	tabBarLabel: 'Send'
+	tabBarLabel: 'DET'
   };
 
 	constructor(props) {
@@ -31,10 +31,12 @@ class SendToken extends React.Component {
 			isTransferSuccess: false,
 			refreshing: false,
 			modalVisible: false,
+			modal2Visible: false,
 			isValidAddress: false,
 			selectedCustomSegment: '',
 			transferToAddress: '',
-			charityList:[],
+			charityList: [],
+			contactList: [],
 		};
   	}
 
@@ -69,7 +71,7 @@ class SendToken extends React.Component {
 		}
 		catch(error) {
 			this.setState({hasWallet: false});
-			this.setState({message: error});
+			//this.setState({message: error});
 		}
 	}
 
@@ -80,6 +82,12 @@ class SendToken extends React.Component {
 		const tokenAddress = daTokenAddress;
 		this.setState({tokenAddress: tokenAddress});
 		self.getCharityList();
+		self.getContactList();
+	}
+
+	componentWillUnmount() {
+		this.setState({transferToAddress: ''});
+		this.setState({detInputAmount: ''});
 	}
 
 	getCharityList() {
@@ -90,6 +98,17 @@ class SendToken extends React.Component {
 		}) 
 		.catch((error) => { console.error(error); 
 		}); 
+	}
+
+	getContactList = async () => {
+		AsyncStorage.getItem('contactList').then( (value) =>
+			this.setState({contactList: JSON.parse(value)})
+		)
+	}
+
+	selectContact(item) {
+		this.setState({transferToAddress: item});
+		this.toggleModal2(false);
 	}
 
 	isAddress(address) {
@@ -119,12 +138,6 @@ class SendToken extends React.Component {
 	}
 
 	emitSend() {
-		/*
-		TODO: transfer(to, value) i.p.v.configDataString()
-		let transferToAddress = this.state.transferToAddress;
-		const iface = new ethers.Interface(metacoin_artifacts);
-		let transferDets = iface.functions.transfer(transferToAddress, amount);
-		*/
 		let self = this;
 		if(wallet !== '') {
 			wallet.provider = etherscanProvider;
@@ -134,7 +147,6 @@ class SendToken extends React.Component {
 			let transactionHash;
 			self.setState({isSigned: false});
 			self.setState({isTransferSuccess: false});
-			//self.setState({message: "OK: " + self.state.transferToAddress});
 
 			const transaction = {
 				from: wallet.address,
@@ -171,12 +183,29 @@ class SendToken extends React.Component {
 		this.setState({ modalVisible: visible });
 	}
 
+	toggleModal2(visible) {
+		this.setState({ modal2Visible: visible });
+	}
+
+	extractKey = (item, index) => item.id.toString();
+
+	renderItem = ({item}) => {
+		return (
+			<View style={styles.contact_list}>
+				<TouchableHighlight onPress = {() => {this.selectContact(item.address)}}>
+					<Text style={{color:'#CCC'}}>{item.name}</Text>
+				</TouchableHighlight>
+			</View>
+		)
+	}
+
   render() {
 	const options = this.state.charityList;
 
 	function setSelectedOption(option){
 		this.setState({transferToAddress: option.value});
 		this.toggleModal(false);
+		this.toggleModal2(false);
 	}
 
     return (
@@ -187,7 +216,8 @@ class SendToken extends React.Component {
 			/>
 		}>
 		
-		<Modal animationType = {"slide"} transparent = {false}
+		<Modal animationType = {"slide"} 
+			transparent = {false}
 			visible = {this.state.modalVisible}
 			onRequestClose = {() => { console.log("Modal has been closed.") } }>
 			<View style = {styles.modal}>
@@ -217,13 +247,28 @@ class SendToken extends React.Component {
 						}}
 					/>
 				</View>
-				<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
-					this.toggleModal(!this.state.modalVisible)}}>
-					<Text style = {styles.hyperLink}> Scan QR-code</Text>
-				</TouchableHighlight>
 				<Text>{'\n'}</Text>
 				<TouchableHighlight style={styles.smallGreyButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
+					<Text style = {styles.hyperLink}> Close Modal</Text>
+				</TouchableHighlight>
+			</View>
+		</Modal>
+		<Modal animationType = {"slide"} 
+			transparent = {false}
+			visible = {this.state.modal2Visible}
+			onRequestClose = {() => {} }>
+			<View style = {styles.modal}>
+				<Text style={styles.header_h4}>My Contacts</Text>
+				<FlatList
+					numColumns={1}
+					data={this.state.contactList}
+					renderItem={this.renderItem}
+					keyExtractor={this.extractKey}
+				/>
+				<Text>{'\n'}</Text>
+				<TouchableHighlight style={styles.smallGreyButton} onPress = {() => {
+					this.toggleModal2(!this.state.modal2Visible)}}>
 					<Text style = {styles.hyperLink}> Close Modal</Text>
 				</TouchableHighlight>
 			</View>
@@ -234,40 +279,53 @@ class SendToken extends React.Component {
 			<Text style={styles.prompt}>Balance: </Text>
 			<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'}</Text>
 			<Text style={styles.prompt}>Nonce: </Text>
-			<Text>{this.state.nonce}{'\n'}{'\n'}</Text>
+			<Text>{this.state.nonce}{'\n'}</Text>
 		</Text>
-		<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
-			this.toggleModal(!this.state.modalVisible)}}>
-			<Text style = {styles.hyperLink}> Get Address </Text>
-		</TouchableHighlight>
+		<View style={{flexDirection:'row', width: window.width}}>
+			<View style={{flex:2}}>
+				<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+					this.toggleModal(!this.state.modalVisible)}}>
+					<Text style = {styles.hyperLink}> Charities </Text>
+				</TouchableHighlight>
+			</View>
+			<View style={{flex:2}}>
+				<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+					this.toggleModal2(!this.state.modal2Visible)}}>
+					<Text style = {styles.hyperLink}> My Contacts </Text>
+				</TouchableHighlight>
+			</View>
+		</View>
 		<Text style={styles.baseText}>
-			<Text style={styles.prompt}>Send tokens to address: </Text>
-			<Text>{'\n'}</Text>
+			<Text style={styles.prompt}>{'\n'}Send tokens to address: {'\n'}</Text>
 		</Text>
-		{this.state.hasWallet &&<TextInput
-			style={styles.input}
-			defaultValue = {this.state.transferToAddress}
-			underlineColorAndroid = "transparent"
-			autoCapitalize = "none"
-			autoFocus = {true}
-			selectable = {true}
-			selectTextOnFocus = {true}
-			maxLength = {80}
-			placeholderTextColor = "#A0B5C8"
-			onChangeText = {(transferToAddress) => this.setState({transferToAddress})}
-		/>}
-		<TextInput
-			style={styles.input}
-			underlineColorAndroid = "transparent"
-			placeholder = "Minimum 1 token"
-			placeholderTextColor = "#A0B5C8"
-			keyboardType={'numeric'}
-			maxLength={10}
-			blurOnSubmit={true}
-			onChangeText={(detInputAmount) => this.setState({detInputAmount})}
-			value={this.state.detInputAmount} 
-		/>
-		
+		<View>
+			<TextInput
+				style={styles.input}
+				defaultValue = {this.state.transferToAddress}
+				placeholder = "0x..."
+				underlineColorAndroid = "transparent"
+				autoCapitalize = "none"
+				autoFocus = {true}
+				selectable = {true}
+				selectTextOnFocus = {true}
+				maxLength = {43}
+				placeholderTextColor = "#A0B5C8"
+				onChangeText = {(transferToAddress) => this.setState({transferToAddress})}
+			/>
+		</View>
+		<View>
+			<TextInput
+				style={styles.input}
+				underlineColorAndroid = "transparent"
+				placeholder = "Minimum 1 token"
+				placeholderTextColor = "#A0B5C8"
+				keyboardType={'numeric'}
+				maxLength={10}
+				blurOnSubmit={true}
+				onChangeText={(detInputAmount) => this.setState({detInputAmount})}
+				value={this.state.detInputAmount} 
+			/>
+		</View>
 		<Button 
 			color="#BCB3A2"
 			title="Submit"
@@ -312,6 +370,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     fontSize: 14,
     marginBottom: 15,
+    marginRight: 12,
+    color: '#999999',
+  },
+  input_narrow: {
+    height: 40, 
+    borderColor: '#D3C8B2', 
+    borderWidth: 1,
+    fontSize: 14,
+    marginBottom: 15,
+    marginRight: 70,
     color: '#999999',
   },
   prompt: {
@@ -333,10 +401,10 @@ const styles = StyleSheet.create({
 	},
 	smallBlueButton: {
 		backgroundColor: '#8192A2',
-		padding: 4,
-		width: 320,
+		paddingTop: 4,
+		paddingBottom: 4,
+		width: 160,
 		marginBottom: 10,
-		marginLeft: 20,
 		borderRadius: 4,
 		alignItems: 'center',
 		justifyContent: 'center',
@@ -361,6 +429,17 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: 'normal'
 	},
+	contact_list: {
+		marginLeft:10,
+		marginRight:10,
+		marginBottom:2,
+		paddingLeft:20,
+		paddingTop:10,
+		paddingBottom:10,
+		width:320,
+		borderRadius:4,
+		backgroundColor:'#8192A2'
+	}
 });
 
 export default SendToken;

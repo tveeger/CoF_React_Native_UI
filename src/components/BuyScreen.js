@@ -10,8 +10,7 @@ import FA from 'react-native-vector-icons/FontAwesome';
 
 class BuyScreen extends React.Component {
 	static navigationOptions = {
-		title: 'Get your tokens',
-		tabBarLabel: 'Fetch',
+		title: 'Get your tokens'
 	};
 
 	constructor(props) {
@@ -121,7 +120,8 @@ class BuyScreen extends React.Component {
 				<Text style={styles.baseText}>
 					<Ionicons name={'ios-cart-outline'} size={26} style={styles.icon} />
 					<Text style={styles.header_h4}> Fetch some DET tokens {'\n'}{'\n'}</Text>
-					{this.state.isInitated && <Text>Set the amount of Euros you want to transfer.</Text>}					
+					{!this.state.isSubmitted && <Text style={styles.errorText}>{'\n'}{this.state.errorMessage}{'\n'}</Text>}
+					{this.state.isInitated && <Text style={styles.prompt}>Set the amount of Euros you want to transfer.</Text>}
 				</Text>
 
 				{this.state.isInitated && <TextInput
@@ -141,10 +141,8 @@ class BuyScreen extends React.Component {
 					accessibilityLabel="Submit"
 					onPress = { ()=> this.createSubmitCode()}
 				/>}
-				{this.state.isSubmitted && <Text style={styles.row}>{this.state.submitMessage}</Text>}
-				{!this.state.isSubmitted && <Text style={styles.errorText}>{this.state.errorMessage}</Text>}
+				{this.state.isSubmitted && <Text style={styles.prompt}>{this.state.submitMessage}</Text>}
 				{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
-				
 				<CreateTokensScreen />
 			</ScrollView>
 		);

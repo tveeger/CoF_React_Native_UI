@@ -6,7 +6,7 @@ import Websocket from './Websocket.js';
 class ChatScreen extends React.Component {
   static navigationOptions = {
     title: 'Connect with others',
-    tabBarLabel: 'Chat',
+    tabBarLabel: 'Chat'
   };
 
   render() {
