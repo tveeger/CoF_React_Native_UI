@@ -20,7 +20,6 @@ class BuyScreen extends React.Component {
 			isSubmitted: false,
 			isInitated: false,
 			connected: false,
-			euroInputAmount: '',
 			submitMessage: '',
 			walletAddress: '',
 			tokenAddress: '',
@@ -95,7 +94,7 @@ class BuyScreen extends React.Component {
 	}
 
 	sendMessage(code) {
-		let messageContent = '{amount: "' + this.state.euroInputAmount + '", code: "' + code + '", sender:"' + wallet.address + '"}';
+		let messageContent = '{code: "' + code + '", sender:"' + wallet.address + '"}';
 		/*const SigningKey = ethers._SigningKey;
 		const privateKey = wallet.privateKey;
 		const signingKey = new SigningKey(privateKey);
@@ -109,7 +108,6 @@ class BuyScreen extends React.Component {
 		this.setState({pk: messageContent});
 		this.setState({errorMessage: recovered});*/
 		this.setState({isSubmitted: true});
-		this.setState({euroInputAmount: ''});
 		this.setState({isInitated: false});
 	}
 
@@ -124,23 +122,13 @@ class BuyScreen extends React.Component {
 					{this.state.isInitated && <Text style={styles.prompt}>Set the amount of Euros you want to transfer.</Text>}
 				</Text>
 
-				{this.state.isInitated && <TextInput
-					style={styles.input}
-					underlineColorAndroid = "transparent"
-					placeholder = "Minimum 1 Euro"
-					placeholderTextColor = "#A0B5C8"
-					keyboardType={'numeric'}
-					maxLength={4}
-					onChangeText={(euroInputAmount) => this.setState({euroInputAmount})}
-					value={this.state.euroInputAmount}
-				/>}
-
 				{this.state.isInitated && <Button 
 					color="#BCB3A2"
-					title="submit"
+					title="Create code"
 					accessibilityLabel="Submit"
 					onPress = { ()=> this.createSubmitCode()}
 				/>}
+
 				{this.state.isSubmitted && <Text style={styles.prompt}>{this.state.submitMessage}</Text>}
 				{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
 				<CreateTokensScreen />
