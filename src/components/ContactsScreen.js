@@ -50,9 +50,9 @@ class ContactsScreen extends React.Component {
 		)
 	}
 
-	saveContacts = async () => {
+/*	saveContacts = async () => {
 		AsyncStorage.setItem('contactList', JSON.stringify(this.state.contactList))
-	}
+	}*/
 
 	addContact =  async () => {
 		let newName = this.state.newName;
@@ -65,7 +65,8 @@ class ContactsScreen extends React.Component {
 		let addedContactList = this.state.contactList.concat([{"id": contactcount+1, "name": newName, "address": newAddress}])
 		this.setState({contactList: addedContactList});
 		this.getContactList().then(() => {
-			this.saveContacts();
+			//this.saveContacts();
+			AsyncStorage.setItem('contactList', JSON.stringify(addedContactList));
 		}).then(() => {
 			this.toggleModal(false);
 		}).then(() => {

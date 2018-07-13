@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, AsyncStorage } from 'react-native';
+import { View, Text} from 'react-native';
 import ethers from 'ethers';
 
 global.daNetwork = ethers.providers.networks.rinkeby;

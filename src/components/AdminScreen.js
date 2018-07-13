@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, AsyncStorage, Modal, TextInput, StyleSheet, RefreshControl, ActivityIndicator, TouchableHighlight } from 'react-native';
+import { Button, Image, View, ScrollView, Text, AsyncStorage, Modal, TextInput, StyleSheet, RefreshControl, ActivityIndicator, TouchableHighlight, FlatList } from 'react-native';
 import { RadioButtons, SegmentedControls } from 'react-native-radio-buttons';
 import ethers from 'ethers';
 import Connector from './Connector.js';
@@ -31,6 +31,7 @@ class AdminScreen extends React.Component {
 		modalVisible: false,
 		searchAddress: '',
 		charityList:[],
+		contactList: [],
 		};
 	}
 
@@ -46,8 +47,12 @@ class AdminScreen extends React.Component {
 		self.setState({walletAddress: wallet.address});
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
-		self.getWalletInfo();
 		self.getCharityList();
+		self.getContactList();
+	}
+
+	componentWillUnmount() {
+		this.setState({tokenAddress: ''});
 	}
 
 	getWalletInfo = async () => {
@@ -92,6 +97,18 @@ class AdminScreen extends React.Component {
 		}); 
 	}
 
+	getContactList = async () => {
+		await AsyncStorage.getItem('contactList').then( (value) =>
+			this.setState({contactList: JSON.parse(value)})
+		)
+	}
+
+	selectContact(item) {
+		this.setState({searchAddress: item});
+		this.setState({hasPositiveBalance: false});
+		this.toggleModal(false);
+	}
+
 	toggleModal(visible) {
 		this.setState({ modalVisible: visible });
 	}
@@ -104,7 +121,7 @@ class AdminScreen extends React.Component {
 				this.setState({isValidAddress: true});
 				return true;
 			} else {
-			
+			this.setState({message: "This is not a valid address"});
 			return false;
 		}
 	}
@@ -120,10 +137,23 @@ class AdminScreen extends React.Component {
 		});*/
 	}
 
+	extractKey = (item, index) => item.id.toString();
+
+	renderItem = ({item}) => {
+		return (
+			<View style={styles.contact_list}>
+				<TouchableHighlight onPress = {() => {this.selectContact(item.address)}}>
+					<Text style={{color:'#CCC'}}>{item.name}</Text>
+				</TouchableHighlight>
+			</View>
+		)
+	}
+
   	render() {
   		const options = this.state.charityList;
   		function setSelectedOption(option){
 			this.setState({searchAddress: option.value});
+			this.setState({hasPositiveBalance: false});
 			this.toggleModal(false);
 		}
 		return (
@@ -158,6 +188,13 @@ class AdminScreen extends React.Component {
 								}}
 							/>
 						</View>
+						<Text style={styles.header_h4}>My Contacts</Text>
+						<FlatList
+							numColumns={1}
+							data={this.state.contactList}
+							renderItem={this.renderItem}
+							keyExtractor={this.extractKey}
+						/>
 						<Text>{'\n'}</Text>
 						<TouchableHighlight style={styles.smallGreyButton} onPress = {() => {
 							this.toggleModal(!this.state.modalVisible)}}>
@@ -266,6 +303,17 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: 'normal'
 	},
+	contact_list: {
+		marginLeft:10,
+		marginRight:10,
+		marginBottom:2,
+		paddingLeft:20,
+		paddingTop:10,
+		paddingBottom:10,
+		width:320,
+		borderRadius:4,
+		backgroundColor:'#8192A2'
+	}
 });
 
 export default AdminScreen;

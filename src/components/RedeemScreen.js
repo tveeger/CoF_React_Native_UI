@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, AsyncStorage, TextInput, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
 import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -59,7 +59,7 @@ class RedeemScreen extends React.Component {
 
 	componentWillMount() {
 		var self = this;
-		self.setState({walletAddress: wallet.address});
+		this.setState({walletAddress: wallet.address});
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
 		self.getWalletInfo();

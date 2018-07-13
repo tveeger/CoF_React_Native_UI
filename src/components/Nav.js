@@ -71,6 +71,8 @@ class Nav extends React.Component {
 
 	unconnect() {
 		AsyncStorage.removeItem('mnemonic');
+		AsyncStorage.removeItem('daTokenId');
+		AsyncStorage.removeItem('contactList');
 		this.setState({hasWallet: false});
 		this.toggleModal(true);
 		this.setState({ modalMessage: 'Your wallet has been removed. You can recover if you have your mnemonic passphrase.' });
@@ -182,26 +184,25 @@ class Nav extends React.Component {
 	}
 }
 
-const TabNav = createTabNavigator({
-	HomeScreen: { screen: Nav },
-	SendEth: { screen: SendEth },
-	SendToken: { screen: SendToken },
-	ChatScreen: { screen: ChatScreen }
+const TabNav = TabNavigator({
+		HomeScreen: { screen: Nav },
+		SendEth: { screen: SendEth },
+		SendToken: { screen: SendToken },
+		ChatScreen: { screen: ChatScreen }
 	}, {
 	tabBarOptions: {
 		activeTintColor: '#666',
 		inactiveTintColor: '#DDD',
 		showIcon: false,
-		labelStyle: {
-		fontSize: 12,
+		labelStyle: { fontSize: 12 },
+		style: { backgroundColor: '#8192A2' },
+		indicatorStyle: { backgroundColor: '#DDD' }
 	},
-	style: {
-			backgroundColor: '#8192A2',
+	navigationOptions: {
+		header: {
+			visible: true,
 		},
-		indicatorStyle: {
-			backgroundColor: '#DDD',
-		}
-	}
+	},
 });
 
 const StackNav = StackNavigator({
@@ -218,7 +219,8 @@ const StackNav = StackNavigator({
   }, {
     navigationOptions: {
       headerTintColor: '#DDD',
-      headerStyle: {backgroundColor: '#8192A2'}
+      headerStyle: {backgroundColor: '#8192A2'},
+      title: 'Chains of Freedom'
     }
   
 });

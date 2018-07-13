@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
-import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, AsyncStorage } from 'react-native';
+import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, AsyncStorage, RefreshControl } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
 import metacoin_artifacts from '../contracts/BirdlandToken.json';
 import CreateTokensScreen from './CreateTokensScreen.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Octicons from 'react-native-vector-icons/Octicons';
-import FA from 'react-native-vector-icons/FontAwesome';
+//import Octicons from 'react-native-vector-icons/Octicons';
+//import FA from 'react-native-vector-icons/FontAwesome';
 
 class BuyScreen extends React.Component {
 	static navigationOptions = {
-		title: 'Get your tokens'
+		title: 'Fetch your DET tokens'
 	};
 
 	constructor(props) {
@@ -20,6 +20,7 @@ class BuyScreen extends React.Component {
 			isSubmitted: false,
 			isInitated: false,
 			connected: false,
+			refreshing: false,
 			submitMessage: '',
 			walletAddress: '',
 			tokenAddress: '',
@@ -28,6 +29,8 @@ class BuyScreen extends React.Component {
 			incoming: '',
 			errorMessage: '',
 			daTokenId: '',
+			testCode: 'test12345',
+			tokenCodeList: [],
 		};
 
 		this.socket = new WebSocket('ws://45.32.186.169:28475');
@@ -41,7 +44,7 @@ class BuyScreen extends React.Component {
             this.setState({incoming:e.data});
         };
         this.socket.onerror = (e) => {
-            this.setState({errorMessage:e.message});
+            //this.setState({errorMessage:e.message});
             console.log(e.message);
         };
         this.socket.onclose = (e) => {
@@ -49,7 +52,8 @@ class BuyScreen extends React.Component {
             console.log(e.code, e.reason);
         };
         this.sendMessage = this.sendMessage.bind(this);
-        this.createSubmitCode = this.createSubmitCode.bind(this);
+        //this.createSubmitCode = this.createSubmitCode.bind(this);
+        this.addTokenCode = this.addTokenCode.bind(this);
 	}
 
 	componentWillMount() {
@@ -69,28 +73,26 @@ class BuyScreen extends React.Component {
 		this.setState({isInitated: false});
 	}
 
-	createSubmitCode() {
-		let submitCode = Math.random().toString(16).slice(2);
-		
-		if(submitCode != '') {
-			this.setState({submitCode: submitCode});
-			this.sendMessage(submitCode);
-			this.getTokenId();
-		}
+	onRefresh() {
+		this.setState({refreshing: true});
+		this.getContactList().then(() => {
+			this.setState({refreshing: false});
+		});
 	}
 
 	getTokenId = async () => {
-		try {
-			let daTokenId = await AsyncStorage.getItem('daTokenId');
-			if(daTokenId == null) {
-				let submitCode = this.state.submitCode;
-				if (submitCode != '') {
-					AsyncStorage.setItem('daTokenId', this.state.submitCode);
-				}
-			}	
-		} catch(error) {
+		await AsyncStorage.getItem('daTokenId').then( (value) =>
+			this.setState({tokenCodeList: JSON.parse(value), hasData: true, objectCount: Object.keys(JSON.parse(value)).length})
+		)
+	}
 
-		}
+	addTokenCode =  async () => {
+		let submitCode = Math.random().toString(16).slice(2);
+		let addedTokenId = this.state.tokenCodeList.concat([{"id": submitCode}])
+		this.setState({tokenCodeList: addedTokenId});
+		AsyncStorage.setItem('daTokenId', JSON.stringify(addedTokenId));
+		this.setState({submitCode: submitCode});
+		this.sendMessage();
 	}
 
 	sendMessage(code) {
@@ -114,24 +116,32 @@ class BuyScreen extends React.Component {
 	render() {
 		const {coinbase, tokenAddress } = this.props;
 		return (
-			<ScrollView style={styles.container}>
-				<Text style={styles.baseText}>
-					<Ionicons name={'ios-cart-outline'} size={26} style={styles.icon} />
-					<Text style={styles.header_h4}> Fetch some DET tokens {'\n'}{'\n'}</Text>
-					{!this.state.isSubmitted && <Text style={styles.errorText}>{'\n'}{this.state.errorMessage}{'\n'}</Text>}
-					{this.state.isInitated && <Text style={styles.prompt}>Set the amount of Euros you want to transfer.</Text>}
-				</Text>
+			<ScrollView style={styles.container} refreshControl={
+			<RefreshControl
+						refreshing={this.state.refreshing}
+						onRefresh={this.onRefresh.bind(this)}
+					/>
+				}>
+				<View style={styles.container}>
+					<Text style={styles.baseText}>
+						<Ionicons name={'ios-flask'} size={26} style={styles.icon} />
+						<Text style={styles.header_h4}> 1. Generate request code {'\n'}</Text>
+						{!this.state.isSubmitted && <Text style={styles.errorText}>{'\n'}{this.state.errorMessage}{'\n'}</Text>}
+						{this.state.isInitated && <Text style={styles.prompt}>Click this one to get your DET request code.</Text>}
+					</Text>
 
-				{this.state.isInitated && <Button 
-					color="#BCB3A2"
-					title="Create code"
-					accessibilityLabel="Submit"
-					onPress = { ()=> this.createSubmitCode()}
-				/>}
+					{this.state.isInitated && <Button 
+						color="#BCB3A2"
+						title="Create code"
+						accessibilityLabel="Submit"
+						onPress = { ()=> this.addTokenCode()}
+					/>}
 
-				{this.state.isSubmitted && <Text style={styles.prompt}>{this.state.submitMessage}</Text>}
-				{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
-				<CreateTokensScreen />
+					{this.state.isSubmitted && <Text style={styles.prompt}>{this.state.submitMessage}</Text>}
+					{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
+				</View>
+				{!this.state.isSubmitted && <CreateTokensScreen newTokenId={JSON.stringify(this.state.tokenCodeList)} />}
+				<Text></Text>
 			</ScrollView>
 		);
 	}

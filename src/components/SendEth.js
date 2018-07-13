@@ -33,11 +33,22 @@ class SendEth extends React.Component {
 		};
 	}
 
+
+	componentWillMount() {
+		let self = this;
+		this.setState({walletAddress: wallet.address});
+		self.getWalletInfo();
+		self.getContactList();
+	}
+
+	componentWillUnmount() {
+		let self = this;
+
+	}
+
 	getWalletInfo = async () => {
 		try {
 			const self = this;
-			let mnemonic = await AsyncStorage.getItem('mnemonic');
-
 			let etherAmount = '';
 			walletAddress = this.state.walletAddress;
 			this.setState({hasWallet: true});
@@ -65,18 +76,6 @@ class SendEth extends React.Component {
 			this.setState({hasWallet: false});
 			this.setState({message: error});
 		}
-	}
-
-	componentWillMount() {
-		let self = this;
-		this.setState({walletAddress: wallet.address});
-		self.getWalletInfo();
-		self.getContactList();
-	}
-
-	componentWillUnmount() {
-		let self = this;
-
 	}
 
 	getFocus() {

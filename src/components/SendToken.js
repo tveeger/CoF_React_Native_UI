@@ -40,24 +40,28 @@ class SendToken extends React.Component {
 		};
   	}
 
-  	getWalletInfo = async () => {
+	componentWillMount() {
+		let self = this;
+		
+		this.setState({walletAddress: wallet.address});
+		const tokenAddress = daTokenAddress;
+		this.setState({tokenAddress: tokenAddress});
+		self.getWalletInfo();
+		self.getCharityList();
+		self.getContactList();
+	}
+
+	componentWillUnmount() {
+		this.setState({transferToAddress: ''});
+		this.setState({detInputAmount: ''});
+	}
+
+	getWalletInfo = async () => {
 		try {
 			const self = this;
 			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
 
-
-			walletAddress = self.state.walletAddress;
-			self.setState({hasWallet: true});
-			self.setState({isBusy: true});
-
-			if (wallet !== '') {
-				//transaction number
-				wallet.getTransactionCount('latest').then(function(count) {
-					self.setState({nonce: count.toString()});
-				});
-			}
-			
 			if(contract !== '') {
 				//symbol
 				contract.symbol().then(function(result){
@@ -68,6 +72,16 @@ class SendToken extends React.Component {
 					self.setState({tokenBalance: parseInt(result)});
 				});
 			}
+
+			self.setState({hasWallet: true});
+			self.setState({isBusy: true});
+
+			if (wallet !== '') {
+				//transaction number
+				wallet.getTransactionCount('latest').then(function(count) {
+					self.setState({nonce: count.toString()});
+				});
+			}
 		}
 		catch(error) {
 			this.setState({hasWallet: false});
@@ -75,20 +89,6 @@ class SendToken extends React.Component {
 		}
 	}
 
-	componentWillMount() {
-		let self = this;
-		this.setState({walletAddress: wallet.address});
-		self.getWalletInfo();
-		const tokenAddress = daTokenAddress;
-		this.setState({tokenAddress: tokenAddress});
-		self.getCharityList();
-		self.getContactList();
-	}
-
-	componentWillUnmount() {
-		this.setState({transferToAddress: ''});
-		this.setState({detInputAmount: ''});
-	}
 
 	getCharityList() {
 		return fetch('http://www.chainsoffreedom.org/js/cof_charities.json') 
@@ -101,7 +101,7 @@ class SendToken extends React.Component {
 	}
 
 	getContactList = async () => {
-		AsyncStorage.getItem('contactList').then( (value) =>
+		await AsyncStorage.getItem('contactList').then( (value) =>
 			this.setState({contactList: JSON.parse(value)})
 		)
 	}
@@ -337,7 +337,7 @@ class SendToken extends React.Component {
 		{this.state.isTransferSuccess && <Text style={styles.prompt}>Hash is mined:{'\n'} </Text>}
 		{this.state.isTransferSuccess && <Text>{this.state.submitMessage}{'\n'}</Text>}
 		{this.state.isValidAddress && <Text style={styles.errorText}>Not a valid address{'\n'}</Text>}
-		<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>		
+		<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>
       </ScrollView>
 
     );
