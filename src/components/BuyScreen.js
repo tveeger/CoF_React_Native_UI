@@ -164,7 +164,7 @@ class BuyScreen extends React.Component {
 					{this.state.isEncryptedSent && <Text style={styles.prompt}>Your code has been sent to server.{'\n'}</Text>}
 					{this.state.isSubmitcodeCreated && <Text>{this.state.submitMessage} {this.state.submitCode}{'\n'}</Text>}
 					<Text style={styles.errorText}>{this.state.errorMessage}{'\n'}</Text>
-					<Text>SubmitCodeList: {JSON.stringify(this.state.submitCodeList)}{'\n'}</Text>
+					<Text>{'\n'}</Text>
 				</Text>
 			</ScrollView>
 		);

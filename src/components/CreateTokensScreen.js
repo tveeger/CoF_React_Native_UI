@@ -45,8 +45,15 @@ class CreateTokensScreen extends React.Component {
 		self.setState({isSigned: false});
 		self.setState({walletAddress: wallet.address});
 		self.setState({receiptIdList: JSON.parse(self.props.newReceiptId)});
-		self.getWalletInfo();
-		self.getReceiptId();
+		if (wallet !== '') {
+			self.setState({hasWallet: true});
+			//transaction number
+			wallet.getTransactionCount('latest').then(function(count) {
+				self.setState({nonce: count.toString()});
+			});
+		}
+		//self.getContractInfo();
+		self.getReceiptList();
 	}
 
 	componentWillUnmount() {
@@ -55,25 +62,22 @@ class CreateTokensScreen extends React.Component {
 		this.setState({tokenCreatedStatus: false});
 	}
 
-	getWalletInfo = async () => {
+	getContractInfo = async () => {
 		try {
 			const self = this;
 			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
 			let receiptId = self.state.receiptId;
 
-			if (wallet !== '') {
-				self.setState({hasWallet: true});
-				//transaction number
-				wallet.getTransactionCount('latest').then(function(count) {
-					self.setState({nonce: count.toString()});
-				});
-			}
+			
 
 			if(contract !== '') {
 				//get token created from receipt
 				contract.getTokenCreatedStatusFromReceipt(receiptId).then(function(result){
 					self.setState({receiptCreated: result});
+					if(!result)	{
+						self.setState({receiptCreatedText: "No receipt created"})
+					}
 				});
 				//get Euro amount from receipt
 				contract.getEuroAmountFromReceipt(receiptId).then(function(result){
@@ -100,18 +104,15 @@ class CreateTokensScreen extends React.Component {
 		}
 	}
 
-	getReceiptId = async () => {
+	getReceiptList = async () => {
 		const self = this;
 		try {
-			/*let value = await AsyncStorage.getItem('daReceiptId')
-			if(value != null && value != '') {
-				self.setState({receiptIdList: JSON.parse(value), hasData: true, objectCount: Object.keys(JSON.parse(value)).length}) 
+			let receipts = await AsyncStorage.getItem('daReceiptId');
+			if (receipts !== '' && receipts !== null) {
+				let receiptIdList = JSON.parse(receipts);
+				self.setState({receiptIdList: receiptIdList, hasData: true, objectCount: Object.keys(receiptIdList).length}) 
 				self.setState({isEmptyReceipts: false}); //hide .2
-			}
-			let newReceiptIdList = self.state.newReceiptIdList;//[];
-			let receiptIdList = self.state.receiptIdList;
-			if(receiptIdList !== null) {
-				//loop through receiptIdList and check if token is created or destroyed
+				let newReceiptIdList = self.state.newReceiptIdList;//[];
 				let tokenCreated = null;
 				let tokensDestroyed = 1;
 				for (var i=0; i < receiptIdList.length; i++) {
@@ -120,42 +121,16 @@ class CreateTokensScreen extends React.Component {
 					if(tokenCreated === false && tokensDestroyed === 0) {
 						newReceiptIdList.push(
 							{
-								id: receiptIdList[i].id, 
-								created: tokenCreated, 
-								destroyd: tokensDestroyed 
+								id: receiptIdList[i].id
 							}
-						);
+						)
 					}
-
 				}
 				self.setState({newReceiptIdList: newReceiptIdList});
-				self.setState({isEmptyReceipts: false}); //hide .2
-			} else {
-				self.setState({isEmptyReceipts: true}); //show .2
-			}*/
-			let value = await AsyncStorage.getItem('daReceiptId')
-			let receiptIdList = JSON.parse(value);
-			self.setState({receiptIdList: receiptIdList, hasData: true, objectCount: Object.keys(receiptIdList).length}) 
-			self.setState({isEmptyReceipts: false}); //hide .2
-			let newReceiptIdList = self.state.newReceiptIdList;//[];
-			let tokenCreated = null;
-			let tokensDestroyed = 1;
-			for (var i=0; i < receiptIdList.length; i++) {
-				tokenCreated = await self.getTokenCreatedStatus(receiptIdList[i].id);
-				tokensDestroyed = await self.getTokenDestroyedStatus(receiptIdList[i].id); //gives error: "invalid json response"
-				if(tokenCreated === false && tokensDestroyed === 0) {
-					newReceiptIdList.push(
-						{
-							id: receiptIdList[i].id
-						}
-					)
-				}
-
 			}
-			self.setState({newReceiptIdList: newReceiptIdList});
 		}
 		catch(error) {
-			self.setState({errorMessage: 'getReceiptId-1: ' + error});
+			self.setState({errorMessage: 'getReceiptList: ' + error});
 		}
 	}
 
@@ -181,26 +156,11 @@ class CreateTokensScreen extends React.Component {
 		self.setState({receiptCreatedText: ""});
 	}
 
-	checkTokenCreatedStatus = async () => {
-		const self = this;
-		let receiptId = self.state.receiptId;
-		self.setState({receiptCreatedText: ""});
-		await contract.getTokenCreatedStatusFromReceipt(receiptId)
-		.then((result) => {
-			self.setState({receiptCreated: result}); //if true: show .3
-			if(result) {
-				self.setState({receiptCreatedText: "Got something: " + result});	
-			} else {
-				self.setState({receiptCreatedText: "zero, zilch, absolutely nothing" + result});	
-			}
-		})
-		/*.then((result) => {
-			self.setState({receiptCreatedText: "zero, zilch, absolutely nothing" + result});
-		})*/
-		.catch((error) => {
-			self.setState({receiptCreatedText: "No receipts found: " + error});
-		});
-		
+	checkTokenCreatedStatus() {
+		this.setState({receiptCreatedText: ""});
+		this.setState({isSigned: false});
+		this.setState({isTransferSuccess: false});
+		this.getContractInfo();
 	}
 
 	checkEuroBalance() {
@@ -211,10 +171,6 @@ class CreateTokensScreen extends React.Component {
 				this.setState({tokenCreated: true});
 			}
 		}
-	}
-
-	getReceiptList() {
-
 	}
 
 	toggleModal(visible) {
@@ -323,7 +279,6 @@ class CreateTokensScreen extends React.Component {
 
 				<Text style={styles.baseText}>
 					<Text>{this.state.receiptCreatedText}{'\n'}</Text>
-					
 					{this.state.receiptCreated && <Ionicons name={'ios-hammer'} size={26} style={styles.icon} />}
 					{this.state.receiptCreated && <Text style={styles.header_h4}> 3. Create your DET tokens{'\n'}</Text>}
 					{this.state.receiptCreated && <Text style={styles.prompt}>Your budget for this receipt is{'\n'} </Text>}
@@ -345,8 +300,7 @@ class CreateTokensScreen extends React.Component {
 					{'\n'}{this.state.errorMessage}
 				</Text>
 				<Text>
-					list1: {JSON.stringify(this.state.receiptIdList)}{'\n'}
-					list2: {JSON.stringify(this.state.newReceiptIdList)}{'\n'}
+					
 				</Text>
 			</View>
 		);
