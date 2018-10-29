@@ -4,7 +4,6 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
-let mnemonic;
 
 class RedeemScreen extends React.Component {
   static navigationOptions = {

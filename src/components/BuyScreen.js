@@ -17,7 +17,7 @@ class BuyScreen extends React.Component {
 		super(props);
 
 		this.state = {
-			isSubmitted: false,
+			isSubmitcodeCreated: false,
 			isInitated: false,
 			connected: false,
 			refreshing: false,
@@ -28,14 +28,15 @@ class BuyScreen extends React.Component {
 			confirmMessage: '',
 			incoming: '',
 			errorMessage: '',
-			daTokenId: '',
 			testCode: 'test12345',
-			tokenCodeList: [],
+			submitCodeList: null,
+			signature: null,
+			isEncryptedSent: false,
 		};
 
-		this.socket = new WebSocket('ws://45.32.186.169:28475');
+		//this.socket = new WebSocket('ws://45.32.186.169:28475');
 		//this.socket = new WebSocket('ws://127.0.0.1:28475');
-        //this.socket = new WebSocket('ws://echo.websocket.org'); //test
+        this.socket = new WebSocket('ws://echo.websocket.org'); //test
         this.socket.onopen = () => {
             this.setState({connected:true})
         };
@@ -44,16 +45,16 @@ class BuyScreen extends React.Component {
             this.setState({incoming:e.data});
         };
         this.socket.onerror = (e) => {
-            //this.setState({errorMessage:e.message});
-            console.log(e.message);
+            this.setState({errorMessage:e.message});
+            //console.log(e.message);
         };
         this.socket.onclose = (e) => {
             this.setState({connected:false})
             console.log(e.code, e.reason);
         };
         this.sendMessage = this.sendMessage.bind(this);
-        //this.createSubmitCode = this.createSubmitCode.bind(this);
-        this.addTokenCode = this.addTokenCode.bind(this);
+        this.generateSubmitCode = this.generateSubmitCode.bind(this);
+        //this.getSigningKey = this.getSigningKey.bind(this);
 	}
 
 	componentWillMount() {
@@ -65,12 +66,14 @@ class BuyScreen extends React.Component {
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
 		self.setState({isInitated:true});
-		self.getTokenId();
+		//self.getSigningKey();
+		self.getReceiptId();
 	}
 
 	componentWillUnmount() {
-		this.setState({isSubmitted: false});
+		this.setState({isSubmitcodeCreated: false});
 		this.setState({isInitated: false});
+		this.setState({isEncryptedSent: false});
 	}
 
 	onRefresh() {
@@ -80,37 +83,56 @@ class BuyScreen extends React.Component {
 		});
 	}
 
-	getTokenId = async () => {
-		await AsyncStorage.getItem('daTokenId').then( (value) =>
-			this.setState({tokenCodeList: JSON.parse(value), hasData: true, objectCount: Object.keys(JSON.parse(value)).length})
-		)
+	getReceiptId = async () => {
+		try {
+			await AsyncStorage.getItem('daReceiptId').then( (value) =>
+				this.setState({submitCodeList: JSON.parse(value)})
+			)
+		}
+		catch(error) {
+			this.setState({errorMessage: 'daReceiptId error: ' + error});
+		}
 	}
 
-	addTokenCode =  async () => {
-		let submitCode = Math.random().toString(16).slice(2);
-		let addedTokenId = this.state.tokenCodeList.concat([{"id": submitCode}])
-		this.setState({tokenCodeList: addedTokenId});
-		AsyncStorage.setItem('daTokenId', JSON.stringify(addedTokenId));
-		this.setState({submitCode: submitCode});
-		this.sendMessage();
+	generateSubmitCode =  async () => {
+		try {
+			let submitCode = Math.random().toString(16).slice(2); //create random code
+			let submitCodeList = this.state.submitCodeList;
+			if(submitCodeList !== null) {
+				submitCodeList = this.state.submitCodeList.concat({id: submitCode}); //add code to array
+				AsyncStorage.setItem('daReceiptId', JSON.stringify(submitCodeList)); //write to async storage
+			this.setState({submitCodeList: submitCodeList}); //write to status
+			} else {
+				submitCodeList = [{id: submitCode}];
+				AsyncStorage.setItem('daReceiptId', JSON.stringify(submitCodeList)); //write to async storage
+				this.setState({submitCodeList: submitCodeList}); //write to status
+			}
+
+			this.setState({submitCode: submitCode});
+			this.setState({isSubmitcodeCreated: true});
+			this.setState({isInitated: false});
+			this.setState({submitMessage: 'Now make a bank transfer in Euros to IBAN NL52BUNQ2025415389 and dont forget to add the request code in the comment area.'});
+			this.encryptMessage(submitCode);
+		}
+		catch(error) {
+			this.setState({errorMessage: 'generateSubmitCode: ' + error});
+		}
+	}
+
+	encryptMessage(message) {
+		const SigningKey = ethers._SigningKey;
+		const privateKey = wallet.privateKey;
+		let signingKey = new ethers.SigningKey(privateKey);
+		let messageBytes = ethers.utils.toUtf8Bytes(message);
+		let messageDigest = ethers.utils.keccak256(messageBytes);
+		let signature = signingKey.signDigest(messageDigest); //Error: is not a function
+		//this.setState({errorMessage: 'Encryption: ' + JSON.stringify(signature)});
+		return this.sendMessage(JSON.stringify(signature));
 	}
 
 	sendMessage(code) {
-		let messageContent = '{code: "' + code + '", sender:"' + wallet.address + '"}';
-		/*const SigningKey = ethers._SigningKey;
-		const privateKey = wallet.privateKey;
-		const signingKey = new SigningKey(privateKey);
-		let messageBytes = ethers.utils.toUtf8Bytes(messageContent);
-		let messageDigest = ethers.utils.keccak256(messageBytes);
-		let signature = signingKey.signDigest(messageDigest);*/
-		this.socket.send(messageContent);
-		this.setState({submitMessage: 'Transfer the exact amount of Euros to IBAN NL52BUNQ2025415389 and add the following code you see below in the comment area.'});
-		/*var recovered = SigningKey.recover(messageDigest, signature.r,
-                    signature.s, signature.recoveryParam);
-		this.setState({pk: messageContent});
-		this.setState({errorMessage: recovered});*/
-		this.setState({isSubmitted: true});
-		this.setState({isInitated: false});
+		this.socket.send(code);
+		this.setState({isEncryptedSent: true});
 	}
 
 	render() {
@@ -126,7 +148,6 @@ class BuyScreen extends React.Component {
 					<Text style={styles.baseText}>
 						<Ionicons name={'ios-flask'} size={26} style={styles.icon} />
 						<Text style={styles.header_h4}> 1. Generate request code {'\n'}</Text>
-						{!this.state.isSubmitted && <Text style={styles.errorText}>{'\n'}{this.state.errorMessage}{'\n'}</Text>}
 						{this.state.isInitated && <Text style={styles.prompt}>Click this one to get your DET request code.</Text>}
 					</Text>
 
@@ -134,14 +155,17 @@ class BuyScreen extends React.Component {
 						color="#BCB3A2"
 						title="Create code"
 						accessibilityLabel="Submit"
-						onPress = { ()=> this.addTokenCode()}
+						onPress = { ()=> this.generateSubmitCode()}
 					/>}
-
-					{this.state.isSubmitted && <Text style={styles.prompt}>{this.state.submitMessage}</Text>}
-					{this.state.isSubmitted && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
+					{this.state.isSubmitcodeCreated && <View style={styles.codeSpace}><Text style={styles.submitCode}> {this.state.submitCode} </Text></View>}
 				</View>
-				{!this.state.isSubmitted && <CreateTokensScreen newTokenId={JSON.stringify(this.state.tokenCodeList)} />}
-				<Text></Text>
+				{!this.state.isSubmitcodeCreated && <CreateTokensScreen newReceiptId={JSON.stringify(this.state.submitCodeList)} />}
+				<Text style={styles.baseText}>
+					{this.state.isEncryptedSent && <Text style={styles.prompt}>Your code has been sent to server.{'\n'}</Text>}
+					{this.state.isSubmitcodeCreated && <Text>{this.state.submitMessage} {this.state.submitCode}{'\n'}</Text>}
+					<Text style={styles.errorText}>{this.state.errorMessage}{'\n'}</Text>
+					<Text>SubmitCodeList: {JSON.stringify(this.state.submitCodeList)}{'\n'}</Text>
+				</Text>
 			</ScrollView>
 		);
 	}
@@ -159,6 +183,7 @@ const styles = StyleSheet.create({
 		/*textAlign: 'left',*/
 		color: '#999999',
 		marginBottom: 5,
+		marginLeft: 5,
 	},
 	header_h4: {
 		color: '#2D4866',

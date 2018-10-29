@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Button, Image, AsyncStorage, TouchableHighlight, View, ScrollView, Text, Modal, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
-import { StackNavigator, TabNavigator, createTabNavigator } from 'react-navigation';
+import { StackNavigator, createMaterialTopTabNavigator } from 'react-navigation';
 import ethers from 'ethers';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
 import Connector from './Connector.js';
@@ -17,6 +17,7 @@ import CharitiesScreen from './CharitiesScreen.js';
 import ContactsScreen from './ContactsScreen.js';
 import AdminScreen from './AdminScreen.js';
 import RedeemScreen from './RedeemScreen.js';
+import HelpScreen from './HelpScreen.js';
 
 class Nav extends React.Component {
 	static navigationOptions = {
@@ -71,8 +72,10 @@ class Nav extends React.Component {
 
 	unconnect() {
 		AsyncStorage.removeItem('mnemonic');
-		AsyncStorage.removeItem('daTokenId');
+		AsyncStorage.removeItem('daReceiptId');
 		AsyncStorage.removeItem('contactList');
+		AsyncStorage.removeItem('myRsaPrivate');
+		AsyncStorage.removeItem('myRsaPublic');
 		this.setState({hasWallet: false});
 		this.toggleModal(true);
 		this.setState({ modalMessage: 'Your wallet has been removed. You can recover if you have your mnemonic passphrase.' });
@@ -174,7 +177,8 @@ class Nav extends React.Component {
 						navigate('AboutScreen')}}>
 						<Text style = {styles.hyperLink}> About </Text>
 					</TouchableHighlight>
-					<TouchableHighlight style={styles.smallButton} onPress = {() => {	}}>
+					<TouchableHighlight style={styles.smallButton} onPress = {() => {
+						navigate('HelpScreen')}}>
 						<Text style = {styles.hyperLink}> Help </Text>
 					</TouchableHighlight>
 				</View>
@@ -184,7 +188,7 @@ class Nav extends React.Component {
 	}
 }
 
-const TabNav = TabNavigator({
+const TabNav = createMaterialTopTabNavigator({
 		HomeScreen: { screen: Nav },
 		SendEth: { screen: SendEth },
 		SendToken: { screen: SendToken },
@@ -215,7 +219,8 @@ const StackNav = StackNavigator({
   ContactsScreen: { screen: ContactsScreen },
   AdminScreen: { screen: AdminScreen },
   RedeemScreen: { screen: RedeemScreen },
-  CharitiesScreen: { screen: CharitiesScreen }
+  CharitiesScreen: { screen: CharitiesScreen },
+  HelpScreen: { screen: HelpScreen }
   }, {
     navigationOptions: {
       headerTintColor: '#DDD',

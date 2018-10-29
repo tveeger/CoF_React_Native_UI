@@ -86,8 +86,8 @@ class AboutScreen extends React.Component {
 		return (
 			<ScrollView style={styles.container}>
 				<Text style={styles.baseText}>
-					<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
-					<Text style={styles.header_h4}> The Foundation {'\n'}{'\n'}</Text>
+					<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 30}} />
+					<Text style={styles.header_h4}> The Foundation 123 {'\n'}{'\n'}</Text>
 					  Chains of Freedom is a foundation, registered in The Netherlands. CoF aims to give everyone 
 					  the opportunity to make transparent and secure donations to charities. 
 					  We use the latest blockchain technology.{'\n'}{'\n'}
@@ -111,9 +111,9 @@ class AboutScreen extends React.Component {
 					<Text>{this.state.tokenVersion}{'\n'}</Text>
 					<Text style={styles.prompt}>Current / Total Supply: </Text>
 					<Text>DET {this.state.totalDetsAmount} / {this.state.totalDetsSupply} {'\n'}{'\n'}</Text>
-					
 					<Text>{this.state.message}</Text>
 				</Text>
+				
 			</ScrollView>
 		);
     }

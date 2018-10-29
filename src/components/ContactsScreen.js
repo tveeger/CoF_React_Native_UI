@@ -14,7 +14,6 @@ class ContactsScreen extends React.Component {
 		super(props);
 
 		this.state = {
-		hasWallet: false,
 		hasData: false,
 		modalVisible: false,
 		refreshing: false,
@@ -24,15 +23,13 @@ class ContactsScreen extends React.Component {
 		contactList: [],
 		newContact: '',
 		objectCount: 0,
+		errorMessage: '',
 		};
 
 	}
 
 	componentWillMount() {
 		let self = this;
-		/*AsyncStorage.getItem('contactList').then( (value) =>
-			this.setState({contactList: JSON.parse(value), hasData: true, objectCount: Object.keys(JSON.parse(value)).length})
-		)*/
 		this.setState({message: ""});
 		self.getContactList();
 	}
@@ -45,14 +42,15 @@ class ContactsScreen extends React.Component {
 	}
 
 	getContactList = async () => {
-		AsyncStorage.getItem('contactList').then( (value) =>
-			this.setState({contactList: JSON.parse(value), hasData: true, objectCount: Object.keys(JSON.parse(value)).length})
-		)
+		const self = this;
+		AsyncStorage.getItem('contactList')
+		.then( (value) => 
+				//self.setState({contactList: JSON.parse(value), hasData: true, objectCount: Object.keys(JSON.parse(value).length)})
+				self.setState({contactList: JSON.parse(value), hasData: true})
+			).catch(function(error){
+				self.setState({errorMessage: 'getContactList-error: ' + error.toString()});
+			})
 	}
-
-/*	saveContacts = async () => {
-		AsyncStorage.setItem('contactList', JSON.stringify(this.state.contactList))
-	}*/
 
 	addContact =  async () => {
 		let newName = this.state.newName;
@@ -65,7 +63,6 @@ class ContactsScreen extends React.Component {
 		let addedContactList = this.state.contactList.concat([{"id": contactcount+1, "name": newName, "address": newAddress}])
 		this.setState({contactList: addedContactList});
 		this.getContactList().then(() => {
-			//this.saveContacts();
 			AsyncStorage.setItem('contactList', JSON.stringify(addedContactList));
 		}).then(() => {
 			this.toggleModal(false);
@@ -75,7 +72,6 @@ class ContactsScreen extends React.Component {
 	}
 
 	deleteContact= async (id) => {
-		//let exName = {id: id};
 		let contactList = this.state.contactList;
 		let contactcount = Object.keys(contactList).length;
 		
@@ -84,9 +80,8 @@ class ContactsScreen extends React.Component {
 		this.setState({contactList: contactList});
 		//this.setState({message: 'just deleted ' + selectedContact});
 		this.setState({objectCount: contactcount-1});
-		this.saveContacts().then(() => {
-			this.getContactList();
-		});
+		await AsyncStorage.setItem('contactList', JSON.stringify(contactList));
+		this.onRefresh();
 	}
 
 	toggleModal(visible) {
@@ -185,6 +180,7 @@ class ContactsScreen extends React.Component {
 					keyExtractor={this.extractKey}
 				/>
 				<Text style={styles.baseText}>{this.state.message}</Text>
+				<Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
 				<Text style={styles.prompt}></Text>
 			</View>
 		</ScrollView>
@@ -264,7 +260,6 @@ const styles = StyleSheet.create({
 	},
 	modal: {
 		flex: 1,
-		
 		backgroundColor: 'whitesmoke',
 		paddingTop: 100
 	},
@@ -276,7 +271,11 @@ const styles = StyleSheet.create({
 	icon: {
 		color: '#2D4866',
 		fontSize: 30,
-  },
+  	},
+  	errorText: {
+   		marginTop: 10,
+    	color: 'red'
+  	}
 });
 
 

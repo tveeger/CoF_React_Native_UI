@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Button, AsyncStorage, View, ScrollView, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import ethers from 'ethers';
+import {RSA, RSAKeychain} from 'react-native-rsa-native';
 import Connector from './Connector.js';
 import HomeScreen from './HomeScreen.js';
 import { StackNavigator } from 'react-navigation';
@@ -62,12 +63,22 @@ class CreateWalletForm extends React.Component {
 			wallet = ethers.Wallet.fromMnemonic(newMnemonic);
 			wallet.provider = etherscanProvider;
 			AsyncStorage.setItem('mnemonic', newMnemonic);
+			
 			self.setState({walletAddress: wallet.address});
 			self.setState({walletSaved: true});
 			self.setState({isBusy: false});
+			self.generateKeys();
 		} else {
 			self.setState({message: "Could not save " + newMnemonic});
 		}
+	}
+
+	generateKeys = async () => {
+		RSA.generateKeys(4096) // set key size
+		.then(keys => {
+			AsyncStorage.setItem('myRsaPrivate', keys.private);
+			AsyncStorage.setItem('myRsaPublic', keys.public);
+		})
 	}
 
 	renderItem = ({item}) => {

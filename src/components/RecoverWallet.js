@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Button, AsyncStorage, View, ScrollView, Text, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import ethers from 'ethers';
+import {RSA, RSAKeychain} from 'react-native-rsa-native';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { StackNavigator } from 'react-navigation';
@@ -20,6 +21,7 @@ class RecoverWalletForm extends React.Component {
 			submitMessage: '',
 			walletAddress: '',
 			message: '',
+			errorMessage: '',
 			hasWallet: false,
 			walletSaved: false,
 			isBusy: false,
@@ -40,9 +42,10 @@ class RecoverWalletForm extends React.Component {
 
 	emitMnemonic() {
 		this.setState({isBusy: true});
+		this.setState({message: ""});
 		let thisMnemonic = this.state.mnemonic;
 		const HDNode = ethers.HDNode;
-		
+
 		setTimeout(function() { this.timerElapsed(); }.bind(this), 5000);
 
 		let isValidMnemonic = HDNode.isValidMnemonic(thisMnemonic);
@@ -51,15 +54,25 @@ class RecoverWalletForm extends React.Component {
 			wallet = ethers.Wallet.fromMnemonic(thisMnemonic);
 			wallet.provider = etherscanProvider;
 			this.setState({walletAddress: wallet.address});
-			
 			AsyncStorage.setItem('mnemonic', thisMnemonic);
+
 			this.setState({walletSaved: true});
 			this.setState({isBusy: false});
-			//this.setState({mnemonic: ''});
+			
+			//this.generateSigningKey();
+			this.generateKeys();
 		} else {
 			this.setState({message: "Invalid mnemonic"});
 			this.setState({isBusy: false});
 		}
+	}
+
+	generateKeys = async () => {
+		RSA.generateKeys(4096) // set key size
+		.then(keys => {
+			AsyncStorage.setItem('myRsaPrivate', keys.private);
+			AsyncStorage.setItem('myRsaPublic', keys.public);
+		})
 	}
 
   render() {
@@ -94,7 +107,7 @@ class RecoverWalletForm extends React.Component {
 			{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
 		</Text>
 		{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
-		<Text style={styles.errorText}>{this.state.message}{'\n'}</Text>
+		<Text style={styles.errorText}>{this.state.message}{this.state.errorMessage}{'\n'}</Text>
 		{this.state.walletSaved && <Button 
 			color="#BCB3A2"
 			title="Go Back"

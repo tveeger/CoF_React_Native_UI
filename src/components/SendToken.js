@@ -101,8 +101,9 @@ class SendToken extends React.Component {
 	}
 
 	getContactList = async () => {
-		await AsyncStorage.getItem('contactList').then( (value) =>
-			this.setState({contactList: JSON.parse(value)})
+		const self = this;
+		AsyncStorage.getItem('contactList').then( (value) =>
+			self.setState({contactList: JSON.parse(value)})
 		)
 	}
 
@@ -219,7 +220,7 @@ class SendToken extends React.Component {
 		<Modal animationType = {"slide"} 
 			transparent = {false}
 			visible = {this.state.modalVisible}
-			onRequestClose = {() => { console.log("Modal has been closed.") } }>
+			onRequestClose = {() => { } }>
 			<View style = {styles.modal}>
 				<Text style={styles.header_h4}>List of Charities</Text>
 				<View style = {styles.textField}>
@@ -274,7 +275,7 @@ class SendToken extends React.Component {
 			</View>
 		</Modal>
 		<Text style={styles.baseText}>
-			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 120, height: 128}} />
+			<Image source={require('../img/beeldmerk_30x32_darkblue.png')} style={{width: 30}} />
 			<Text style={styles.header_h4}> Send DETs{'\n'}{'\n'}</Text>
 			<Text style={styles.prompt}>Balance: </Text>
 			<Text>{this.state.tokenSymbol} {this.state.tokenBalance}{'\n'}</Text>

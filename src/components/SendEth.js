@@ -125,8 +125,9 @@ class SendEth extends React.Component {
 	}
 
 	getContactList = async () => {
+		const self = this;
 		AsyncStorage.getItem('contactList').then( (value) =>
-			this.setState({contactList: JSON.parse(value)})
+			self.setState({contactList: JSON.parse(value)})
 		)
 	}
 
@@ -236,6 +237,12 @@ const styles = StyleSheet.create({
 		paddingLeft: 10,
 		paddingRight: 10,
 		paddingTop: 10,
+	},
+	modal: {
+		flex: 1,
+		alignItems: 'center',
+		backgroundColor: 'whitesmoke',
+		paddingTop: 100
 	},
 	header_h4: {
 		color: '#2D4866',
