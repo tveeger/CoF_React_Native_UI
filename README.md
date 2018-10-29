@@ -6,15 +6,17 @@ cd -project name-
 
 add in package.json under "dependencies":
 
-	"ethers": "^2.1.3",
+	"ethers": "^3.0.29",
 	
-	"react-native-qrcode": "^0.2.6",
+	"react-native-qrcode": "^0.2.7",
 	
     "react-native-radio-buttons": "^1.0.0",
     
-    "react-native-vector-icons": "^4.4.2",
+    "react-native-vector-icons": "^5.0.0",
     
     "react-navigation": "^1.0.0-beta.19"
+    
+    "react-native-rsa-native": "^1.0.24"
     
 npm install
 
