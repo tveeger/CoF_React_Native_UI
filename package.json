@@ -1,5 +1,5 @@
 {
-  "name": "entboxX2",
+  "name": "entboxX3b",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,20 +7,22 @@
     "test": "jest"
   },
   "dependencies": {
-    "eslint": "^4.19.1",
-    "ethers": "^3.0.16",
-    "react": "16.3.1",
-    "react-native": "0.55.4",
-    "react-native-qrcode": "^0.2.6",
+    "@babel/runtime": "^7.0.0-beta.55",
+    "ethers": "^3.0.29",
+    "react": "16.5.0",
+    "react-native": "0.57.1",
+    "react-native-qrcode": "^0.2.7",
     "react-native-radio-buttons": "^1.0.0",
-    "react-native-vector-icons": "^4.6.0",
-    "react-navigation": "^2.0.1"
+    "react-native-rsa-native": "^1.0.24",
+    "react-native-vector-icons": "^5.0.0",
+    "react-navigation": "^2.16.0"
   },
   "devDependencies": {
-    "babel-jest": "22.4.3",
-    "babel-preset-react-native": "4.0.0",
-    "jest": "22.4.3",
-    "react-test-renderer": "16.3.1"
+    "babel-jest": "^23.6.0",
+    "babel-preset-react-native": "^4.0.1",
+    "jest": "^23.6.0",
+    "metro-react-native-babel-preset": "0.46.0",
+    "react-test-renderer": "16.5.0"
   },
   "jest": {
     "preset": "react-native"
