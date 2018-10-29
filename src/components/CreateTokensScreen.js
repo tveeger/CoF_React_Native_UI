@@ -209,7 +209,7 @@ class CreateTokensScreen extends React.Component {
 					self.setState({isTransferSuccess: true});
 					self.setState({receiptCreated:false});
 					self.setState({submitMessage: transaction.hash});
-					self.getWalletInfo();
+					self.getContractInfo();
 				});
 			});
 		}
