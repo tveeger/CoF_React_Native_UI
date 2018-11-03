@@ -126,7 +126,7 @@ class SendEth extends React.Component {
 
 	getContactList = async () => {
 		const self = this;
-		AsyncStorage.getItem('contactList').then( (value) =>
+		await AsyncStorage.getItem('contactList').then( (value) =>
 			self.setState({contactList: JSON.parse(value)})
 		)
 	}

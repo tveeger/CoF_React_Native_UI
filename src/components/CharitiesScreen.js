@@ -12,7 +12,7 @@ class CharitiesScreen extends React.Component {
     return (
       <ScrollView style={styles.container}>
         <Text style={styles.baseText}>
-          <Ionicons name={'ios-rose-outline'} size={26} style={styles.icon} />
+          <Ionicons name={'ios-globe'} size={26} style={styles.icon} />
           <Text style={styles.header_h4}> Info for Charity Organizations</Text>
           <Text>{'\n'}If you are a charity organization and you would be on the list, please send us a mail.</Text>
         </Text>

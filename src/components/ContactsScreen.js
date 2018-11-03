@@ -58,17 +58,14 @@ class ContactsScreen extends React.Component {
 		let contactcount = this.state.objectCount;
 		this.setState({objectCount: contactcount+1});
 		this.setState({message: ""});
-		this.setState({amtDeletes: this.state.amtDeletes-1});
-
-		let addedContactList = this.state.contactList.concat([{"id": contactcount+1, "name": newName, "address": newAddress}])
+		let contactList = this.state.contactList;
+		let addedContactList = [];
+		addedContactList.push({"id": contactcount+1, "name": newName, "address": newAddress});
+		addedContactList = contactList.push(addedContactList);
 		this.setState({contactList: addedContactList});
-		this.getContactList().then(() => {
-			AsyncStorage.setItem('contactList', JSON.stringify(addedContactList));
-		}).then(() => {
-			this.toggleModal(false);
-		}).then(() => {
-			this.onRefresh();
-		});
+		
+		await AsyncStorage.setItem('contactList', JSON.stringify(addedContactList));
+		this.toggleModal(false);
 	}
 
 	deleteContact= async (id) => {
@@ -78,7 +75,7 @@ class ContactsScreen extends React.Component {
 		let selectedContact = contactList.map(function(o) { return o.id; }).indexOf(id);
 		contactList.splice(selectedContact,1);
 		this.setState({contactList: contactList});
-		//this.setState({message: 'just deleted ' + selectedContact});
+		this.setState({message: 'just deleted ' + selectedContact});
 		this.setState({objectCount: contactcount-1});
 		await AsyncStorage.setItem('contactList', JSON.stringify(contactList));
 		this.onRefresh();

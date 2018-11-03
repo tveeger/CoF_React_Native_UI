@@ -74,7 +74,7 @@ class TxList extends React.Component {
 			<ScrollView style={styles.container} stickyHeaderIndices={[0]}>
 			<View style={styles.stickyHeader}>
 				<Text style={styles.baseText}>
-					<Ionicons name={'ios-shuffle-outline'} size={26} style={styles.icon} />
+					<Ionicons name={'ios-reorder'} size={26} style={styles.icon} />
 					<Text style={styles.header_h4}> Your Transfer History{'\n'}</Text>
 					<Text>{this.state.txAmt} transactions</Text>
 				</Text>
