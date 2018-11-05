@@ -126,9 +126,13 @@ class SendEth extends React.Component {
 
 	getContactList = async () => {
 		const self = this;
-		await AsyncStorage.getItem('contactList').then( (value) =>
+		AsyncStorage.getItem('contactList')
+		.then( (value) => 
 			self.setState({contactList: JSON.parse(value)})
 		)
+		.catch(function(error){
+			self.setState({message: 'getContactList: ' + error.toString()});
+		})
 	}
 
 	toggleModal2(visible) {
