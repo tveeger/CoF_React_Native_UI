@@ -51,9 +51,11 @@ class ContactsScreen extends React.Component {
 	getContactList = async () => {
 		const self = this;
 		AsyncStorage.getItem('contactList')
-		.then( (value) => 
-			self.setState({contactList: JSON.parse(value), objectCount: JSON.parse(value).length})
-		)
+		.then( (value) => {
+			if (value !== null && value !== '') {
+				self.setState({contactList: JSON.parse(value), objectCount: value.length})
+			}
+		})
 		.catch(function(error){
 			self.setState({errorMessage: 'getContactList: ' + error.toString()});
 		})
@@ -64,11 +66,12 @@ class ContactsScreen extends React.Component {
 		let newName = self.state.newName;
 		let newAddress = self.state.newAddress;
 		let contactcount = self.state.objectCount;
+		contactcount = contactcount+1;
 		let newContactList = [];
-		self.setState({objectCount: contactcount+1});
+		self.setState({objectCount: contactcount});
 		self.setState({message: ""});
 		let contactList = self.state.contactList;
-		newContactList.push({'id': contactcount+1, 'name': newName, 'address': newAddress});
+		newContactList.push({'id': contactcount.toString(), 'name': newName, 'address': newAddress});
 		contactList = contactList.concat(newContactList);
 		self.setState({newContactList: contactList});
 		self.setState({contactList: contactList});
@@ -93,7 +96,7 @@ class ContactsScreen extends React.Component {
 		this.setState({ modalVisible: visible });
 	}
 
-	extractKey = (item, index) => item.id.toString();
+	extractKey = (item, index) => item.id;
 
 	renderItem = ({item}) => {
 		return (

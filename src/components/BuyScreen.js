@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, AsyncStorage, RefreshControl } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
-import metacoin_artifacts from '../contracts/BirdlandToken.json';
+//import metacoin_artifacts from '../contracts/BirdlandToken.json';
 import CreateTokensScreen from './CreateTokensScreen.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+//import {RSA, RSAKeychain} from 'react-native-rsa-native';
 //import Octicons from 'react-native-vector-icons/Octicons';
 //import FA from 'react-native-vector-icons/FontAwesome';
 
@@ -35,8 +36,8 @@ class BuyScreen extends React.Component {
 		};
 
 		//this.socket = new WebSocket('ws://45.32.186.169:28475');
-		//this.socket = new WebSocket('ws://127.0.0.1:28475');
-        this.socket = new WebSocket('ws://echo.websocket.org'); //test
+		this.socket = new WebSocket('ws://192.168.1.10:28475');
+        //this.socket = new WebSocket('ws://echo.websocket.org'); //test
         this.socket.onopen = () => {
             this.setState({connected:true})
         };
@@ -52,7 +53,7 @@ class BuyScreen extends React.Component {
             this.setState({connected:false})
             console.log(e.code, e.reason);
         };
-        this.sendMessage = this.sendMessage.bind(this);
+        this.sendSignature = this.sendSignature.bind(this);
         this.generateSubmitCode = this.generateSubmitCode.bind(this);
         //this.getSigningKey = this.getSigningKey.bind(this);
 	}
@@ -112,26 +113,27 @@ class BuyScreen extends React.Component {
 			this.setState({isSubmitcodeCreated: true});
 			this.setState({isInitated: false});
 			this.setState({submitMessage: 'Now make a bank transfer in Euros to IBAN NL52BUNQ2025415389 and dont forget to add the request code in the comment area.'});
-			this.encryptMessage(submitCode);
+			this.createSignature(submitCode);
 		}
 		catch(error) {
 			this.setState({errorMessage: 'generateSubmitCode: ' + error});
 		}
 	}
 
-	encryptMessage(message) {
+	createSignature(message) {
 		const SigningKey = ethers._SigningKey;
 		const privateKey = wallet.privateKey;
 		let signingKey = new ethers.SigningKey(privateKey);
 		let messageBytes = ethers.utils.toUtf8Bytes(message);
 		let messageDigest = ethers.utils.keccak256(messageBytes);
-		let signature = signingKey.signDigest(messageDigest); //Error: is not a function
+		let signature = signingKey.signDigest(messageDigest);
 		//this.setState({errorMessage: 'Encryption: ' + JSON.stringify(signature)});
-		return this.sendMessage(JSON.stringify(signature));
+		return this.sendSignature(JSON.stringify(signature));
 	}
 
-	sendMessage(code) {
-		this.socket.send(code);
+	sendSignature = async (signature) => {
+		//TODO let signedSignature = RSA.encrypt(signature, publicKey);
+		this.socket.send(signature); //TODO send(signedSignature)
 		this.setState({isEncryptedSent: true});
 	}
 

@@ -58,16 +58,28 @@ class RecoverWalletForm extends React.Component {
 
 			this.setState({walletSaved: true});
 			this.setState({isBusy: false});
-			
-			//this.generateSigningKey();
-			this.generateKeys();
+
+			this.generateEthersSignature();
+			//this.generateRsaKeys();
 		} else {
 			this.setState({message: "Invalid mnemonic"});
 			this.setState({isBusy: false});
 		}
 	}
 
-	generateKeys = async () => {
+	generateEthersSignature = async () => {
+		let hasSigningKey = this.state.signingKey;
+		const SigningKey = ethers._SigningKey;
+		const privateKey = wallet.privateKey;
+		let signingKey = new ethers.SigningKey(privateKey);
+		let message = 'hello world';
+		let messageBytes = ethers.utils.toUtf8Bytes(message);
+		let messageDigest = ethers.utils.keccak256(messageBytes);
+		let signature = signingKey.signDigest(messageDigest);
+		AsyncStorage.setItem('myEthersSignature', JSON.stringify(signature));
+	}
+
+	generateRsaKeys = async () => {
 		RSA.generateKeys(4096) // set key size
 		.then(keys => {
 			AsyncStorage.setItem('myRsaPrivate', keys.private);

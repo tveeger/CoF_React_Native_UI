@@ -13,7 +13,6 @@ class HomeScreen extends React.Component {
 		this.state = {
 			networkName: '',
 			walletAddress: '',
-			message: '',
 			modalVisible: false,
 		};
 	}
@@ -40,6 +39,8 @@ class HomeScreen extends React.Component {
 					<Text style={styles.header_h4}>Wallet Info{'\n'}</Text>
 					<Text style={styles.prompt}>Network: </Text>
 					<Text>{this.state.networkName}{'\n'}</Text>
+					<Text style={styles.prompt}>Version: </Text>
+					<Text>0.52a</Text>
 				</Text>
 				<QRcodeWallet/>
 				<Text>{'\n'}</Text>
@@ -53,9 +54,6 @@ class HomeScreen extends React.Component {
           <Image source={require('../img/logo_dblue_transp_210x117.png')} style={{width: 210, height: 117}} />
         	<Text style={styles.prompt}>{'\n'}Make safe donations</Text>
         </View>
-		<Text style={styles.baseText}>
-			<Text style={styles.errorText}>{this.state.message}{'\n'}{'\n'}</Text>
-		</Text>
 		<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 			this.toggleModal(!this.state.modalVisible)}}>
 			<Text style = {styles.hyperLink}> Wallet Info</Text>
@@ -91,23 +89,6 @@ const styles = StyleSheet.create({
 	},
 	prompt: {
 		color: '#BCB3A2',
-	},
-	errorText: {
-		marginTop: 10,
-		color: 'red'
-	},
-	tabIcon: {
-		width: 30,
-		height: 32,
-  },
-  smallButton: {
-		backgroundColor: '#BCB3A2',
-		padding: 4,
-		width: 150,
-		margin: 10,
-		borderRadius: 8,
-		alignItems: 'center',
-		justifyContent: 'center',
 	},
 	smallBlueButton: {
 		backgroundColor: '#8192A2',

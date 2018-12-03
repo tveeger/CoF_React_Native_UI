@@ -133,6 +133,7 @@ class MessageRsaNative extends React.Component {
 	}
 
 	encrypt = async () => {
+		this.setState({errorMessage: ""});
 		let message = this.state.inputMessage;
 		let publicKey = this.state.myRsaPublic;
 		RSA.encrypt(message, publicKey)
@@ -140,16 +141,23 @@ class MessageRsaNative extends React.Component {
 			this.setState({encryptedMessage: encodedMessage});
 			this.setState({isEncrypted: true});
 		})
+		.catch((error) => { this.setState({errorMessage: error}); 
+		});
 	}
 
 	decrypt = async () => {
 		let encodedMessage = this.state.encryptedMessage;
 		let privateKey = this.state.myRsaPrivate;
-		RSA.decrypt(encodedMessage, privateKey)
-		.then(message => {
-			this.setState({decryptedMessage: message});
-			this.setState({isRecovered: true});
-		})
+		let isEncrypted = this.state.isEncrypted;
+		if (isEncrypted) {
+			RSA.decrypt(encodedMessage, privateKey)
+			.then(message => {
+				this.setState({decryptedMessage: message});
+				this.setState({isRecovered: true});
+			})
+			.catch((error) => { this.setState({errorMessage: error}); 
+			})
+		} else { this.setState({errorMessage: "encrypt a message first"}); }
 	}
 
 	sign = async () => {
@@ -160,6 +168,8 @@ class MessageRsaNative extends React.Component {
 			this.setState({signature: signature});
 			this.setState({isSigned: true});
 		})
+		.catch((error) => { this.setState({errorMessage: error}); 
+		});
 	}
 
 	verify = async () => {
@@ -170,36 +180,45 @@ class MessageRsaNative extends React.Component {
 		.then(valid => {
 			this.setState({isVerified: valid.toString()});
 		})
+		.catch((error) => { this.setState({errorMessage: error}); 
+		});
 	}
 
 	emitSignature = async () => {
-		if( this.state.connected ) {
-			let message = this.state.inputMessage;
-			let privateKey = this.state.myRsaPrivate;
-			RSA.sign(message, privateKey)
-			.then(signature => {
-				this.setState({signature: signature});
-				this.setState({isSigned: true});
-				this.socket.send(signature);
+		if( this.state.connected && this.state.isSigned) {
+			let signature = this.state.signature;
+			let publicKey = this.state.serverPublicRSAKey;
+			RSA.encrypt(signature, publicKey)
+			.then(encodedMessage => {
+				this.setState({encryptedMessage: encodedMessage});
+				this.setState({isEncrypted: true});
+				this.socket.send(encodedMessage);
+			})
+			.then(() => {
+				this.setState({message: "Signature has been sent"})
 			})
 			.catch((error) => { this.setState({errorMessage: error}); 
 			});
-		}
+		} else { this.setState({errorMessage: "We have no signature"}); }
 	}
 
 	emitMessage = async () => {
-		if( this.state.connected ) {
+		if( this.state.connected && this.state.inputMessage !== "") {
 			let message = this.state.inputMessage;
 			let publicKey = this.state.serverPublicRSAKey;
 			RSA.encrypt(message, publicKey)
 			.then(encodedMessage => {
 				this.setState({encryptedMessage: encodedMessage});
 				this.setState({isEncrypted: true});
-				this.socket.send(message);
+				this.socket.send(encodedMessage);
+				this.setState({inputMessage: ""});
+			})
+			.then(() => {
+				this.setState({message: "Message has been sent"})
 			})
 			.catch((error) => { this.setState({errorMessage: error}); 
 			}); 
-		}
+		} else { this.setState({errorMessage: "Fill in a message first"}); }
 	}
 
 	readFromClipboard = async () => {
@@ -229,8 +248,7 @@ class MessageRsaNative extends React.Component {
 
 				<Text style={styles.baseText}>
 					<Text style={styles.header_h4}>RSA-Encryption{'\n'}</Text>
-					<Text>{this.state.message} </Text>
-					<Text style={styles.errorMessage}>{this.state.errorMessage}</Text>
+					<Text style={styles.errorMessage}>{this.state.errorMessage}{'\n'}</Text>
 				</Text>
 				<Text style={styles.baseText}>
 					<Text style={styles.prompt}>Recovered key pair: </Text>
@@ -291,7 +309,8 @@ class MessageRsaNative extends React.Component {
 					{this.state.hasKeys && <Text style={styles.prompt}>verified: </Text>}
 					{this.state.hasKeys && <Text>{this.state.isVerified? "true":"false"}{'\n'}</Text>}
 					{this.state.hasKeys && <Text style={styles.prompt}>Server Public Key: </Text>}
-					{this.state.hasKeys && <Text>{this.state.hasServerPublicKey? "true":"false"} </Text>}
+					{this.state.hasKeys && <Text>{this.state.hasServerPublicKey? "true":"false"} {'\n'}</Text>}
+					<Text>{this.state.message} {'\n'}</Text>
 				</Text>
 				
 			</View>

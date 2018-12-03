@@ -166,8 +166,11 @@ class RedeemScreen extends React.Component {
 					self.setState({isTransferSuccess: true});
 					self.setState({hash: hash.toString()});
 					self.getWalletInfo();
+					
 				});
 			});
+			//TODO: let redeemInfo (address, transferAmount, IBAN) = RSA.encrypt(serverRSAPublicKey)
+			//TODO: socket.send(redeeminfo)
 		}
 	}
 

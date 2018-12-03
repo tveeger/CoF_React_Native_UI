@@ -19,23 +19,25 @@ class CreateTokensScreen extends React.Component {
 			isTransferSuccess: false,
 			hasWallet: null,
 			walletAddress: '',
-			receiptId: '',
-			tokenCreated: false,
+			ReceiptId: '',
 			tokenAddress: '',
 			tokenBalance: 0,
 			errorMessage: '',
 			euroAmountFromReceipt: null,
 			detsAmountFromReceipt: null,
-			receiptCreated: false,
 			receiptCreatedText: '',
+			tokensCreatedText: '',
+			tokenCreatedStatus: true,
+			tokensCreatable: false,
 			tokenCreatorFromReceipt: '',
 			nonce: '',
 			submitMessage: '',
 			isBusy: false,
 			modalVisible: false,
-			isEmptyReceipts: true,
-			receiptIdList: null,
+			isEmptyReceipts: false,
+			receiptIdList: [],
 			newReceiptIdList: [],
+			test:'',
 		};
 
 	}
@@ -44,7 +46,7 @@ class CreateTokensScreen extends React.Component {
 		const self = this;
 		self.setState({isSigned: false});
 		self.setState({walletAddress: wallet.address});
-		self.setState({receiptIdList: JSON.parse(self.props.newReceiptId)});
+		//this.setState({newTokenId: JSON.parse(this.props.newTokenId)});
 		if (wallet !== '') {
 			self.setState({hasWallet: true});
 			//transaction number
@@ -52,14 +54,16 @@ class CreateTokensScreen extends React.Component {
 				self.setState({nonce: count.toString()});
 			});
 		}
-		//self.getContractInfo();
-		self.getReceiptList();
+		//this.getContractInfo();
+		this.getReceiptList();
 	}
 
 	componentWillUnmount() {
 		this.setState({isSigned: false});
+		this.setState({isEmptyReceipts: false});
 		this.setState({isTransferSuccess: false});
-		this.setState({tokenCreatedStatus: false});
+		this.setState({tokenCreatedStatus: true});
+		this.setState({tokensCreatable: false});
 	}
 
 	getContractInfo = async () => {
@@ -67,29 +71,31 @@ class CreateTokensScreen extends React.Component {
 			const self = this;
 			contract = new ethers.Contract(daTokenAddress, metacoin_artifacts, etherscanProvider);
 			contract.connect(etherscanProvider);
-			let receiptId = self.state.receiptId;
-
-			
+			let ReceiptId = self.state.ReceiptId;
 
 			if(contract !== '') {
 				//get token created from receipt
-				contract.getTokenCreatedStatusFromReceipt(receiptId).then(function(result){
-					self.setState({receiptCreated: result});
-					if(!result)	{
-						self.setState({receiptCreatedText: "No receipt created"})
+				contract.getTokenCreatedStatusFromReceipt(ReceiptId).then(function(result){
+					if(result)	{
+						self.setState({tokenCreatedStatus: true});
+						self.setState({tokensCreatable: false}); //hide .3
+						self.setState({receiptCreatedText: "Receipt already created"});
+					} else {
+						self.setState({tokenCreatedStatus: false});
+						self.setState({receiptCreatedText: "No receipt created"});
 					}
 				});
 				//get Euro amount from receipt
-				contract.getEuroAmountFromReceipt(receiptId).then(function(result){
+				contract.getEuroAmountFromReceipt(ReceiptId).then(function(result){
 					self.setState({euroAmountFromReceipt: parseInt(result)});
 					self.checkEuroBalance();
 				});
 				//get DET amount from receipt
-				contract.getDetsAmountFromReceipt(receiptId).then(function(result){
+				contract.getDetsAmountFromReceipt(ReceiptId).then(function(result){
 					self.setState({detsAmountFromReceipt: parseInt(result)});
 				});
 				//get token creator from receipt
-				contract.getTokenCreatorFromReceipt(receiptId).then(function(result){
+				contract.getTokenCreatorFromReceipt(ReceiptId).then(function(result){
 					self.setState({tokenCreatorFromReceipt: result});
 				});
 				//balanceOf getDetsBalance
@@ -100,37 +106,35 @@ class CreateTokensScreen extends React.Component {
 		}
 		catch(error) {
 			this.setState({hasWallet: true});
-			this.setState({errorMessage: 'getWalletInfo-error: ' + error.toString()});
+			this.setState({errorMessage: 'getContractInfo-error: ' + error.toString()});
 		}
 	}
 
 	getReceiptList = async () => {
 		const self = this;
 		try {
-			let receipts = await AsyncStorage.getItem('daReceiptId');
-			if (receipts !== '' && receipts !== null) {
-				let receiptIdList = JSON.parse(receipts);
-				self.setState({receiptIdList: receiptIdList, hasData: true, objectCount: Object.keys(receiptIdList).length}) 
-				self.setState({isEmptyReceipts: false}); //hide .2
-				let newReceiptIdList = self.state.newReceiptIdList;//[];
+			let newReceiptIdList = [];
+			await AsyncStorage.getItem('daReceiptId').then( (value) =>
+				self.setState({receiptIdList: JSON.parse(value)})
+			)
+			let receiptIdList = self.state.receiptIdList;
+			if(receiptIdList !== null) {
 				let tokenCreated = null;
 				let tokensDestroyed = 1;
 				for (var i=0; i < receiptIdList.length; i++) {
 					tokenCreated = await self.getTokenCreatedStatus(receiptIdList[i].id);
-					tokensDestroyed = await self.getTokenDestroyedStatus(receiptIdList[i].id); //gives error: "invalid json response"
+					tokensDestroyed = await self.getTokenDestroyedStatus(receiptIdList[i].id);
 					if(tokenCreated === false && tokensDestroyed === 0) {
-						newReceiptIdList.push(
-							{
-								id: receiptIdList[i].id
-							}
-						)
+						newReceiptIdList.push({'id': receiptIdList[i].id, 'created': tokenCreated, 'destroyd': tokensDestroyed });
 					}
+
 				}
 				self.setState({newReceiptIdList: newReceiptIdList});
+				self.setState({isEmptyReceipts: true}); //show .2
 			}
 		}
 		catch(error) {
-			self.setState({errorMessage: 'getReceiptList: ' + error});
+			self.setState({errorMessage: 'getReceiptID-error: ' + error.toString()});
 		}
 	}
 
@@ -149,9 +153,9 @@ class CreateTokensScreen extends React.Component {
 		}
 	}
 
-	changeTokenCreatedStatus(receiptId) {
+	changeTokenCreatedStatus(ReceiptId) {
 		const self = this;
-		self.setState({receiptId: receiptId});
+		self.setState({ReceiptId: ReceiptId});
 		self.toggleModal(false);
 		self.setState({receiptCreatedText: ""});
 	}
@@ -160,15 +164,21 @@ class CreateTokensScreen extends React.Component {
 		this.setState({receiptCreatedText: ""});
 		this.setState({isSigned: false});
 		this.setState({isTransferSuccess: false});
+		this.setState({tokenCreatorFromReceipt: ''});
 		this.getContractInfo();
 	}
 
 	checkEuroBalance() {
-		let tokenCreatedStatus = this.state.receiptCreated;
-		if(!tokenCreatedStatus) {
-			let euroAmountFromReceipt = this.state.euroAmountFromReceipt;
-			if (euroAmountFromReceipt > 0) {
-				this.setState({tokenCreated: true});
+		let euroAmountFromReceipt = this.state.euroAmountFromReceipt;
+		let tokenCreatedStatus = this.state.tokenCreatedStatus;
+		if(euroAmountFromReceipt > 0 && euroAmountFromReceipt !== null) {
+			this.setState({isEmptyReceipts: true}); //show .2
+			if (!tokenCreatedStatus) {
+				this.setState({tokensCreatable: true}); //show .3
+			}
+		} else {
+			if (tokenCreatedStatus) {
+				this.setState({isEmptyReceipts: false}); //hide .2
 			}
 		}
 	}
@@ -179,7 +189,7 @@ class CreateTokensScreen extends React.Component {
 
 	createDets() {
 		let self = this;
-		const receiptId = self.state.receiptId;
+		const ReceiptId = self.state.ReceiptId;
 
 		if(wallet !== '') {
 			wallet.provider = etherscanProvider;
@@ -187,7 +197,7 @@ class CreateTokensScreen extends React.Component {
 			const tokenAddress = daTokenAddress;
 			let transactionHash;
 			const iface = new ethers.Interface(metacoin_artifacts);
-			let createDets = iface.functions.createDets(receiptId);
+			let createDets = iface.functions.createDets(ReceiptId);
 
 			let tx = {
 				from: wallet.address,
@@ -207,7 +217,6 @@ class CreateTokensScreen extends React.Component {
 				wallet.provider.waitForTransaction(transactionHash).then(function(transaction) {
 					self.setState({isSigned: false});
 					self.setState({isTransferSuccess: true});
-					self.setState({receiptCreated:false});
 					self.setState({submitMessage: transaction.hash});
 					self.getContractInfo();
 				});
@@ -254,38 +263,37 @@ class CreateTokensScreen extends React.Component {
 				</Modal>
 
 				<Text style={styles.baseText}>
-					<Text style={styles.prompt}>Your balance is: {this.state.tokenBalance} DET{'\n'}</Text>
-					{!this.state.isEmptyReceipts && <Ionicons name={'ios-thermometer'} size={26} style={styles.icon} />}
-					{!this.state.isEmptyReceipts && <Text style={styles.header_h4}> 2. Check if funds are ready{'\n'}</Text>}
+					{this.state.isEmptyReceipts && <Ionicons name={'ios-thermometer'} size={26} style={styles.icon} />}
+					{this.state.isEmptyReceipts && <Text style={styles.header_h4}> 2. Check if funds are ready{'\n'}</Text>}
 				</Text>
-				{!this.state.isEmptyReceipts && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+				{this.state.isEmptyReceipts && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.toggleModal(!this.state.modalVisible)}}>
 					<Text style = {styles.hyperLink}>Select from list</Text>
 				</TouchableHighlight>}
 				
-				{!this.state.isEmptyReceipts && <Text style={styles.prompt}>Check if Euro transfer has succeeded</Text>}
-				{!this.state.isEmptyReceipts && <TextInput style = {styles.input}
+				{this.state.isEmptyReceipts && <Text style={styles.prompt}>Check if Euro transfer has succeeded</Text>}
+				{this.state.isEmptyReceipts && <TextInput style = {styles.input}
 					underlineColorAndroid = "transparent"
 					placeholder = "your request code"
 					placeholderTextColor = "#A0B5C8"
 					autoCapitalize = "none"
-					onChangeText = {(text)=>{this.setState({receiptId: text})}}
-					value = {this.state.receiptId}
+					onChangeText = {(text)=>{this.changeTokenCreatedStatus(text)}}
+					value={this.state.ReceiptId}
 				/>}
-				{!this.state.isEmptyReceipts && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+				{this.state.isEmptyReceipts && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
 					this.checkTokenCreatedStatus()}}>
 					<Text style = {styles.hyperLink}>Check now</Text>
 				</TouchableHighlight>}
-
+				
 				<Text style={styles.baseText}>
-					<Text>{this.state.receiptCreatedText}{'\n'}</Text>
-					{this.state.receiptCreated && <Ionicons name={'ios-hammer'} size={26} style={styles.icon} />}
-					{this.state.receiptCreated && <Text style={styles.header_h4}> 3. Create your DET tokens{'\n'}</Text>}
-					{this.state.receiptCreated && <Text style={styles.prompt}>Your budget for this receipt is{'\n'} </Text>}
-					{this.state.receiptCreated && <Text style={styles.header_h4}>DET {this.state.detsAmountFromReceipt} (&euro; {this.state.euroAmountFromReceipt},-) {'\n'}{'\n'}</Text>}
+					{this.state.isEmptyReceipts && <Text>{this.state.receiptCreatedText}{'\n'}</Text>}
+					{this.state.tokensCreatable && <Ionicons name={'ios-hammer'} size={26} style={styles.icon} />}
+					{this.state.tokensCreatable && <Text style={styles.header_h4}> 3. Create your DET tokens{'\n'}</Text>}
+					{this.state.tokensCreatable && <Text style={styles.prompt}>Your budget for this receipt is{'\n'} </Text>}
+					{this.state.tokensCreatable && <Text style={styles.header_h4}>DET {this.state.detsAmountFromReceipt} (&euro; {this.state.euroAmountFromReceipt},-) {'\n'}</Text>}
 				</Text>
 				{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
-				{this.state.receiptCreated && <Button 
+				{this.state.tokensCreatable && <Button 
 					color="#BCB3A2"
 					title="Create tokens"
 					accessibilityLabel="Transfer"
@@ -295,12 +303,11 @@ class CreateTokensScreen extends React.Component {
 				{this.state.isSigned && <ActivityIndicator size="large" color="#8192A2" />}
 				{this.state.isTransferSuccess && <Text style={styles.prompt}> Transfer Hash: {this.state.submitMessage}</Text>}
 				{!this.state.hasWallet && <Text style={styles.errorText}>No wallet found. Please make or recover a wallet first</Text>}
-				
 				<Text style={styles.errorText}>
 					{'\n'}{this.state.errorMessage}
 				</Text>
-				<Text>
-					
+				<Text style={styles.prompt}>
+					{'\n'}{this.state.test}
 				</Text>
 			</View>
 		);

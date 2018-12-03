@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Button, Image, ScrollView, Text, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import MessageEncrypt from './MessageRsaNative.js';
+//import MessageEncrypt from './MessageRsaNative.js';
 
 class HelpScreen extends React.Component {
   static navigationOptions = {
@@ -28,7 +28,7 @@ class HelpScreen extends React.Component {
 					<Ionicons name={'ios-help-buoy'} size={26} style={styles.icon} />
 					<Text style={styles.header_h4}> Help {'\n'}{'\n'}</Text>
 				</Text>
-				<MessageEncrypt/>
+				
 			</ScrollView>
 		);
     }

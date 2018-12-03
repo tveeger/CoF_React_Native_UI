@@ -8,7 +8,7 @@ import HomeScreen from './HomeScreen.js';
 import SendEth from './SendEth.js';
 import SendToken from './SendToken.js';
 import TxList from './TxList.js';
-import CreateWalletForm from './CreateWalletForm.js';
+import CreateWalletForm from './CreateWallet.js';
 import RecoverWalletForm from './RecoverWallet.js';
 import ChatScreen from './ChatScreen.js';
 import BuyScreen from './BuyScreen.js';
