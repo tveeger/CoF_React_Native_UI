@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Button, Image, ScrollView, Text, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 //import MessageEncrypt from './MessageRsaNative.js';
+//import ErebosScreen from './ErebosScreen.js';
 
 class HelpScreen extends React.Component {
   static navigationOptions = {

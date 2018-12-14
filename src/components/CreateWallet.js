@@ -67,7 +67,7 @@ class CreateWallet extends React.Component {
 			self.setState({walletAddress: wallet.address});
 			self.setState({walletSaved: true});
 			self.setState({isBusy: false});
-			//self.generateRsaKeys();
+			self.generateRsaKeys();
 			self.generateEthersSignature();
 		} else {
 			self.setState({message: "Could not save " + newMnemonic});
@@ -79,18 +79,19 @@ class CreateWallet extends React.Component {
 		const SigningKey = ethers._SigningKey;
 		const privateKey = wallet.privateKey;
 		let signingKey = new ethers.SigningKey(privateKey);
-		let message = 'hello world';
+		let message = 'Chains of Freedom';
 		let messageBytes = ethers.utils.toUtf8Bytes(message);
 		let messageDigest = ethers.utils.keccak256(messageBytes);
 		let signature = signingKey.signDigest(messageDigest);
 		AsyncStorage.setItem('myEthersSignature', JSON.stringify(signature));
 	}
 
-	generateSigningKey = async () => {
-		const SigningKey = ethers._SigningKey;
-		const privateKey = wallet.privateKey;
-		let signingKey = new ethers.SigningKey(privateKey);
-		AsyncStorage.setItem('ethersSigningKey', JSON.stringify(signingKey));
+	generateRsaKeys = async () => {
+		RSA.generateKeys(4096) // set key size
+		.then(keys => {
+			AsyncStorage.setItem('myRsaPrivate', keys.private);
+			AsyncStorage.setItem('myRsaPublic', keys.public);
+		})
 	}
 
 	renderItem = ({item}) => {

@@ -114,7 +114,7 @@ class CreateTokensScreen extends React.Component {
 		const self = this;
 		try {
 			let newReceiptIdList = [];
-			await AsyncStorage.getItem('daReceiptId').then( (value) =>
+			await AsyncStorage.getItem('submitCodeList').then( (value) =>
 				self.setState({receiptIdList: JSON.parse(value)})
 			)
 			let receiptIdList = self.state.receiptIdList;

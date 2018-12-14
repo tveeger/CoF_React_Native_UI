@@ -25,6 +25,8 @@ class RecoverWalletForm extends React.Component {
 			hasWallet: false,
 			walletSaved: false,
 			isBusy: false,
+			hasSignature: false,
+			createdKeys: false,
 		};
 	}
 
@@ -60,7 +62,7 @@ class RecoverWalletForm extends React.Component {
 			this.setState({isBusy: false});
 
 			this.generateEthersSignature();
-			//this.generateRsaKeys();
+			this.generateRsaKeys();
 		} else {
 			this.setState({message: "Invalid mnemonic"});
 			this.setState({isBusy: false});
@@ -72,11 +74,12 @@ class RecoverWalletForm extends React.Component {
 		const SigningKey = ethers._SigningKey;
 		const privateKey = wallet.privateKey;
 		let signingKey = new ethers.SigningKey(privateKey);
-		let message = 'hello world';
+		let message = 'Chains of Freedom';
 		let messageBytes = ethers.utils.toUtf8Bytes(message);
 		let messageDigest = ethers.utils.keccak256(messageBytes);
 		let signature = signingKey.signDigest(messageDigest);
 		AsyncStorage.setItem('myEthersSignature', JSON.stringify(signature));
+		this.setState({hasSignature: true});
 	}
 
 	generateRsaKeys = async () => {
@@ -85,48 +88,56 @@ class RecoverWalletForm extends React.Component {
 			AsyncStorage.setItem('myRsaPrivate', keys.private);
 			AsyncStorage.setItem('myRsaPublic', keys.public);
 		})
+		.then(() => {
+			this.setState({createdKeys: true});
+		})
 	}
 
   render() {
   	const {navigate} = this.props.navigation;
     return (
-      <ScrollView style={styles.container}>
-		<Text style={styles.baseText}>
-			<Ionicons name={'ios-color-wand'} size={26} style={styles.icon} />
-			<Text style={styles.header_h4}> Recover your excisting wallet{'\n'}{'\n'}</Text>
-			<Text>Enter your mnemonic  in the field below. {'\n'}</Text>
-		</Text>
-		<TextInput
-			style={styles.input}
-			defaultValue = {this.state.mnemonic}
-			underlineColorAndroid = "transparent"
-			multiline = {true}
-			numberOfLines = {3}
-			placeholder = "Your 12 word mnemonic phrase, separated with a space"
-			placeholderTextColor = "#A0B5C8"
-			blurOnSubmit = {true}
-			onChangeText = {(mnemonic) => this.setState({mnemonic})}
-		/>
-		{!this.state.walletSaved && <Button 
-			color="#BCB3A2"
-			title="Recover"
-			accessibilityLabel="CreateWallet"
-			onPress = { ()=> this.emitMnemonic()}
-		/>}
+		<ScrollView style={styles.container}>
+			<Text style={styles.baseText}>
+				<Ionicons name={'ios-color-wand'} size={26} style={styles.icon} />
+				<Text style={styles.header_h4}> Recover your excisting wallet{'\n'}{'\n'}</Text>
+				<Text>Enter your mnemonic  in the field below. {'\n'}</Text>
+			</Text>
+			<TextInput
+				style={styles.input}
+				defaultValue = {this.state.mnemonic}
+				underlineColorAndroid = "transparent"
+				multiline = {true}
+				numberOfLines = {3}
+				placeholder = "Your 12 word mnemonic phrase, separated with a space"
+				placeholderTextColor = "#A0B5C8"
+				blurOnSubmit = {true}
+				onChangeText = {(mnemonic) => this.setState({mnemonic})}
+			/>
+			{!this.state.walletSaved && <Button 
+				color="#BCB3A2"
+				title="Recover"
+				accessibilityLabel="CreateWallet"
+				onPress = { ()=> this.emitMnemonic()}
+			/>}
 
-		<Text style={styles.baseText}>
-			{this.state.walletSaved && <Text style={styles.prompt}>Mnemonic is legit: </Text>}
-			{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
-		</Text>
-		{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
-		<Text style={styles.errorText}>{this.state.message}{this.state.errorMessage}{'\n'}</Text>
-		{this.state.walletSaved && <Button 
-			color="#BCB3A2"
-			title="Go Back"
-			accessibilityLabel="Go Back"
-			onPress = { ()=> navigate('HomeScreen')}
-		/>}
-      </ScrollView>
+			<Text style={styles.baseText}>
+				{this.state.walletSaved && <Text style={styles.prompt}>Mnemonic is legit: </Text>}
+				{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
+				{this.state.walletSaved && <Text style={styles.prompt}>Keys: </Text>}
+				{this.state.walletSaved && <Text>{this.state.createdKeys.toString()}{'\n'}</Text>}
+				{this.state.walletSaved && <Text style={styles.prompt}>signature: </Text>}
+				{this.state.walletSaved && <Text>{this.state.hasSignature.toString()}{'\n'}</Text>}
+				<Text style={styles.errorText}>{this.state.message}{this.state.errorMessage}{'\n'}</Text>
+			</Text>
+
+			{this.state.walletSaved && <Button 
+				color="#BCB3A2"
+				title="Go Back"
+				accessibilityLabel="Go Back"
+				onPress = { ()=> navigate('HomeScreen')}
+			/>}
+			{this.state.isBusy && <ActivityIndicator size="large" color="#8192A2" />}
+		</ScrollView>
 
     );
   }

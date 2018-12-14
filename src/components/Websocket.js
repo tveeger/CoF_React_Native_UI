@@ -39,9 +39,9 @@ constructor(props) {
 	};
 
 	//this.socket = new WebSocket('ws://45.32.186.169:28475');
-	//this.socket = new WebSocket('ws://192.168.1.10:28475/cof');
+	this.socket = new WebSocket('ws://192.168.1.10:28475/cof');
 	//this.socket = new WebSocket('ws://echo.websocket.org'); //test
-	this.socket = daSocket; //zie connector.js
+	//this.socket = daSocket; //zie connector.js
 
 	this.socket.onopen = () => {
 		this.setState({connected:true})
@@ -61,12 +61,12 @@ constructor(props) {
 	this.sendMessage = this.sendMessage.bind(this);
 }
 
-    componentWillMount() {
-        const self = this;
-        self.recoverKeyPair();
-        self.recoverEthersSignature();
-        //let posts = self.state.posts;
-    }
+	componentWillMount() {
+		const self = this;
+		self.recoverKeyPair();
+		self.recoverEthersSignature();
+		//let posts = self.state.posts;
+	}
 
     //myRsaPublic is set in RecoverWallet and CreateWalletForm
     recoverKeyPair = async () => {
@@ -187,11 +187,13 @@ constructor(props) {
 				  <Text>{this.state.hasSignature ? "true":"false"}</Text>
 				  <Text style={styles.prompt}>, peer key:</Text>
 				  <Text>{this.state.hasPeerPublicKey ? "true":"false"}</Text>
+				  <Text style={styles.prompt}>, connected:</Text>
+				  <Text>{this.state.connected ? "true":"false"}</Text>
 				</Text>
-				<TouchableHighlight style={styles.smallGreyButton} onPress = {() => {
+				{this.state.hasSignature && <TouchableHighlight style={styles.smallGreyButton} onPress = {() => {
 					this.sendSignature()}}>
 					<Text style = {styles.hyperLink}> Send signature</Text>
-				</TouchableHighlight>
+				</TouchableHighlight>}
 				
 				{this.state.connected && <TextInput style = {styles.input}
 				   underlineColorAndroid = "transparent"

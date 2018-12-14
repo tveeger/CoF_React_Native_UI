@@ -72,7 +72,7 @@ class Nav extends React.Component {
 
 	unconnect() {
 		AsyncStorage.removeItem('mnemonic');
-		AsyncStorage.removeItem('daReceiptId');
+		AsyncStorage.removeItem('submitCodeList');
 		AsyncStorage.removeItem('contactList');
 		AsyncStorage.removeItem('myRsaPrivate');
 		AsyncStorage.removeItem('myRsaPublic');

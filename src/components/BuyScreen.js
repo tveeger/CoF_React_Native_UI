@@ -5,7 +5,8 @@ import ethers from 'ethers';
 //import metacoin_artifacts from '../contracts/BirdlandToken.json';
 import CreateTokensScreen from './CreateTokensScreen.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-//import {RSA, RSAKeychain} from 'react-native-rsa-native';
+import {RSA, RSAKeychain} from 'react-native-rsa-native';
+import socketIOClient from 'socket.io-client';
 //import Octicons from 'react-native-vector-icons/Octicons';
 //import FA from 'react-native-vector-icons/FontAwesome';
 
@@ -23,6 +24,7 @@ class BuyScreen extends React.Component {
 			connected: false,
 			refreshing: false,
 			submitMessage: '',
+			hasWallet: false,
 			walletAddress: '',
 			tokenAddress: '',
 			submitCode: '',
@@ -33,29 +35,20 @@ class BuyScreen extends React.Component {
 			submitCodeList: null,
 			signature: null,
 			isEncryptedSent: false,
+			hasSignature: false,
+			myEthersSignature: null,
+			endpoint: "http://192.168.1.10:8000", //45.32.186.169:28475
+			myRsaPublic: '',
+			hasRsaPublic: false,
+			serverPublicRSAKey: null,
+			hasServerPublicRSAKey: false,
+			isEncrypted: false,
 		};
 
-		//this.socket = new WebSocket('ws://45.32.186.169:28475');
-		this.socket = new WebSocket('ws://192.168.1.10:28475');
-        //this.socket = new WebSocket('ws://echo.websocket.org'); //test
-        this.socket.onopen = () => {
-            this.setState({connected:true})
-        };
-        this.socket.onmessage = (e) => {
-            console.log(e.data);
-            this.setState({incoming:e.data});
-        };
-        this.socket.onerror = (e) => {
-            this.setState({errorMessage:e.message});
-            //console.log(e.message);
-        };
-        this.socket.onclose = (e) => {
-            this.setState({connected:false})
-            console.log(e.code, e.reason);
-        };
-        this.sendSignature = this.sendSignature.bind(this);
-        this.generateSubmitCode = this.generateSubmitCode.bind(this);
-        //this.getSigningKey = this.getSigningKey.bind(this);
+		this.cofSocket = socketIOClient(this.state.endpoint + "/acquire");
+		
+		this.sendConfirmationCode = this.sendConfirmationCode.bind(this);
+		this.generateSubmitCode = this.generateSubmitCode.bind(this);
 	}
 
 	componentWillMount() {
@@ -63,18 +56,27 @@ class BuyScreen extends React.Component {
 		wallet.provider = etherscanProvider;
 		const walletAddress = wallet.address;
 		self.setState({walletAddress: walletAddress});
+		self.setState({hasWallet: true})
 		
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
 		self.setState({isInitated:true});
-		//self.getSigningKey();
-		self.getReceiptId();
+
+		self.cofSocket.on('connect', function() { 
+			self.setState({socketId: self.cofSocket.id});
+			self.setState({connected:true});
+		} );
+		self.getSubmitCodeList();
+		self.recoverEthersSignature();
 	}
 
 	componentWillUnmount() {
 		this.setState({isSubmitcodeCreated: false});
 		this.setState({isInitated: false});
 		this.setState({isEncryptedSent: false});
+		this.setState({hasRsaPublic: false});
+		this.setState({hasWallet: false});
+		this.setState({myRsaPublic: ''});
 	}
 
 	onRefresh() {
@@ -84,56 +86,132 @@ class BuyScreen extends React.Component {
 		});
 	}
 
-	getReceiptId = async () => {
+	getSubmitCodeList = async () => {
 		try {
-			await AsyncStorage.getItem('daReceiptId').then( (value) =>
-				this.setState({submitCodeList: JSON.parse(value)})
-			)
+			await AsyncStorage.getItem('submitCodeList')
+			.then( (value) => {
+				if (value !== null) {
+					this.setState({submitCodeList: JSON.parse(value)})
+				}
+			})
 		}
 		catch(error) {
-			this.setState({errorMessage: 'daReceiptId error: ' + error});
+			this.setState({errorMessage: 'submitCodeList error: ' + error});
 		}
 	}
 
-	generateSubmitCode =  async () => {
+	generateSubmitCode() {
+			let submitCode = Math.random().toString(16).slice(2);
+			
+			this.setState({submitCode: submitCode});
+			this.setState({isSubmitcodeCreated: true});
+			//this.assableConfirmationCode(submitCode);
+
+			this.setState({isInitated: false});
+			this.setState({submitMessage: 'Now make a bank transfer in Euros to IBAN NL52BUNQ2025415389 and dont forget to add the request code in the comment area.'});
+			//this.assableConfirmationCode(submitCode);
+			this.saveSubmitCodeList(submitCode);
+	}
+ 
+	tst = async (sc) => {
+		let submitCode = sc;
+		this.setState({errorMessage: 'submitCode: ' + submitCode});
+	}
+
+	saveSubmitCodeList = async (submitCode) => {
 		try {
-			let submitCode = Math.random().toString(16).slice(2); //create random code
 			let submitCodeList = this.state.submitCodeList;
 			if(submitCodeList !== null) {
 				submitCodeList = this.state.submitCodeList.concat({id: submitCode}); //add code to array
-				AsyncStorage.setItem('daReceiptId', JSON.stringify(submitCodeList)); //write to async storage
-			this.setState({submitCodeList: submitCodeList}); //write to status
+				AsyncStorage.setItem('submitCodeList', JSON.stringify(submitCodeList)); //write to async storage
+				this.setState({submitCodeList: submitCodeList}); //write to status
+				this.assableConfirmationCode(submitCode);
 			} else {
 				submitCodeList = [{id: submitCode}];
-				AsyncStorage.setItem('daReceiptId', JSON.stringify(submitCodeList)); //write to async storage
+				AsyncStorage.setItem('submitCodeList', JSON.stringify(submitCodeList)); //write to async storage
 				this.setState({submitCodeList: submitCodeList}); //write to status
+				this.assableConfirmationCode(submitCode);
 			}
-
-			this.setState({submitCode: submitCode});
-			this.setState({isSubmitcodeCreated: true});
-			this.setState({isInitated: false});
-			this.setState({submitMessage: 'Now make a bank transfer in Euros to IBAN NL52BUNQ2025415389 and dont forget to add the request code in the comment area.'});
-			this.createSignature(submitCode);
 		}
 		catch(error) {
-			this.setState({errorMessage: 'generateSubmitCode: ' + error});
+			this.setState({errorMessage: 'SubmitCodeList: ' + error});
 		}
 	}
 
-	createSignature(message) {
-		const SigningKey = ethers._SigningKey;
-		const privateKey = wallet.privateKey;
-		let signingKey = new ethers.SigningKey(privateKey);
-		let messageBytes = ethers.utils.toUtf8Bytes(message);
-		let messageDigest = ethers.utils.keccak256(messageBytes);
-		let signature = signingKey.signDigest(messageDigest);
-		//this.setState({errorMessage: 'Encryption: ' + JSON.stringify(signature)});
-		return this.sendSignature(JSON.stringify(signature));
+	recoverEthersSignature = async () => {
+		const self = this;
+		await AsyncStorage.getItem('myEthersSignature')
+		.then( (value) => {
+			self.setState({myEthersSignature: value});
+			self.setState({hasSignature: true});
+		})
+		.then( () => {
+			this.recoverRsaPublic();
+		})
+		.catch((error) => { 
+			self.setState({errorMessage: 'myPrivateKey: ' + error}); 
+		});
 	}
 
-	sendSignature = async (signature) => {
-		//TODO let signedSignature = RSA.encrypt(signature, publicKey);
-		this.socket.send(signature); //TODO send(signedSignature)
+	recoverRsaPublic = async () => {
+		const self = this;
+		await AsyncStorage.getItem('myRsaPublic')
+		.then( (value) => {
+			self.setState({myRsaPublic: value});
+			self.setState({hasRsaPublic: true});
+		})
+		.then( () => {
+			this.recoverServerPublicRSAKey();
+		})
+		.catch((error) => { 
+			self.setState({errorMessage: 'myPublicKey: ' + error}); 
+		});
+	}
+
+	recoverServerPublicRSAKey = async () => {
+		const self = this;
+		return fetch(serverPublicRSAKey) //see connector.js
+		.then((response) => response.json()) 
+		.then((responseJson) => { 
+			self.setState({serverPublicRSAKey: responseJson.result});
+			this.setState({hasServerPublicRSAKey: true});
+		})
+		.catch((error) => { this.setState({errorMessage: 'Public key not found: ' + error});
+		}); 
+	}
+
+	assableConfirmationCode(sc) {
+		//let submitCode = this.state.submitCode;
+		let submitCode = sc;
+		let walletAddress = this.state.walletAddress;
+		let myPublicRsaKey = this.state.myRsaPublic;
+		let ethersSignature = this.state.myEthersSignature;
+
+		if(this.state.hasWallet && this.state.hasRsaPublic && this.state.hasSignature && this.state.hasServerPublicRSAKey) {
+			let confirmationCode = "{\"submitCode\": \"" + submitCode + "\", \"walletAddress\": \"" + walletAddress + "\", \"myPublicRsaKey\": \"" + myPublicRsaKey + "\", \"ethersSignature\": " + ethersSignature + "}";
+			this.encryptConfirmationCode(confirmationCode);
+			//this.setState({errorMessage: confirmationCode});
+		} else {
+			this.setState({errorMessage: 'No confirmationCode'});
+		}
+	}
+
+	encryptConfirmationCode(cc) {
+		//let confirmationCodeString = JSON.stringify(cc);
+		let conf = "maak me blij";
+		let serverPublicRSAKey = this.state.serverPublicRSAKey;
+		let signedConfirmationCode = RSA.encrypt(conf, serverPublicRSAKey)
+		.then(encodedMessage => {
+			this.setState({isEncrypted: true});
+			//this.setState({errorMessage: encodedMessage});
+			this.sendConfirmationCode(encodedMessage);
+		})
+		.catch((error) => { this.setState({errorMessage: error}); 
+		});
+	}
+
+	sendConfirmationCode(em) {
+		this.cofSocket.emit('message', em);
 		this.setState({isEncryptedSent: true});
 	}
 
@@ -150,7 +228,8 @@ class BuyScreen extends React.Component {
 					<Text style={styles.baseText}>
 						<Ionicons name={'ios-flask'} size={26} style={styles.icon} />
 						<Text style={styles.header_h4}> 1. Generate request code {'\n'}</Text>
-						{this.state.isInitated && <Text style={styles.prompt}>Click this one to get your DET request code.</Text>}
+						{this.state.isInitated && <Text style={styles.prompt}>Click this one to get your DET request code.{'\n'}</Text>}
+						<Text style={styles.prompt}>hasPublicRSAKey: {this.state.hasRsaPublic.toString()}, hasSignature: {this.state.hasSignature.toString()}, serverPublicKey: {this.state.hasServerPublicRSAKey.toString()}, submitCode: {this.state.isSubmitcodeCreated.toString()}, encrypted: {this.state.isEncrypted.toString()}}</Text>
 					</Text>
 
 					{this.state.isInitated && <Button 

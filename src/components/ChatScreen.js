@@ -1,7 +1,8 @@
 //http://www.reactnativeexpress.com/asyncstorage
 import React, { Component } from 'react';
 import { Button, Image, View, Text, StyleSheet } from 'react-native';
-import Websocket from './Websocket.js';
+//import Websocket from './Websocket.js';
+import SocketIo from './SocketIo.js';
 
 class ChatScreen extends React.Component {
   static navigationOptions = {
@@ -13,7 +14,7 @@ class ChatScreen extends React.Component {
     const { navigate } = this.props.navigation;
     return (
       <View>
-         <Websocket />
+         <SocketIo />
       </View>
     );
   }
