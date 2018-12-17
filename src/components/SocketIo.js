@@ -30,8 +30,6 @@ constructor(props) {
 		myRsaPublic: '',
 		peerRsaPublic: '',
 		socketId: '',
-		toSocketId: '',
-
 	};
 	this.sendMessage = this.sendMessage.bind(this);
 	this.cofSocket = socketIOClient(this.state.endpoint + "/chat");
@@ -56,13 +54,11 @@ constructor(props) {
 	handleIncommingMessage(message) {
 		const self = this;
 		let posts = self.state.posts;
-		if (posts !== '') {
-			this.setState({incomingMessage: JSON.stringify(message)});
-			let postsAmount = posts.length + 1;
-			posts = self.state.posts.slice();
-			posts.push({'datetime': self.makeDate(), 'id': postsAmount.toString(), 'payload': message.data, 'row_style': 'left'});
-			self.setState({ posts: posts });
-		}
+		this.setState({incomingMessage: JSON.stringify(message)});
+		let postsAmount = posts.length + 1;
+		posts = self.state.posts.slice();
+		posts.push({'datetime': self.makeDate(), 'id': postsAmount.toString(), 'payload': message.data, 'row_style': 'left'});
+		self.setState({ posts: posts });
 	}
 
 	makeDate() {
@@ -101,8 +97,8 @@ constructor(props) {
 
 	sendMessage(message) {
 		if( this.state.connected ) {
-			//let inputSocketId = this.state.inputSocketId;
-			let inputSocketId = this.state.socketId;
+			let inputSocketId = this.state.inputSocketId;
+			//let inputSocketId = this.state.socketId;
 			let inputMessssage = this.state.inputMessssage;
 			let messageObject = {'user': inputSocketId, 'data': inputMessssage};
 			this.cofSocket.emit('message', messageObject);
@@ -160,7 +156,7 @@ constructor(props) {
 						placeholder = "User ID"
 						placeholderTextColor = "#A0B5C8"
 						autoCapitalize = "none"
-						onChangeText = {(text)=>{this.setState({toSocketId:text})}}
+						onChangeText = {(text)=>{this.setState({inputSocketId:text})}}
 					/>}
 					
 					{this.state.connected && <TextInput style = {styles.input}

@@ -123,10 +123,10 @@ class RecoverWalletForm extends React.Component {
 			<Text style={styles.baseText}>
 				{this.state.walletSaved && <Text style={styles.prompt}>Mnemonic is legit: </Text>}
 				{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
-				{this.state.walletSaved && <Text style={styles.prompt}>Keys: </Text>}
-				{this.state.walletSaved && <Text>{this.state.createdKeys.toString()}{'\n'}</Text>}
-				{this.state.walletSaved && <Text style={styles.prompt}>signature: </Text>}
+				{this.state.walletSaved && <Text style={styles.prompt}>Signature saved: </Text>}
 				{this.state.walletSaved && <Text>{this.state.hasSignature.toString()}{'\n'}</Text>}
+				{this.state.walletSaved && <Text style={styles.prompt}>Keys saved: </Text>}
+				{this.state.walletSaved && <Text>{this.state.createdKeys.toString()}{'\n'}</Text>}
 				<Text style={styles.errorText}>{this.state.message}{this.state.errorMessage}{'\n'}</Text>
 			</Text>
 
