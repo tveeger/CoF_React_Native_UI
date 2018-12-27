@@ -37,7 +37,6 @@ class BuyScreen extends React.Component {
 			isEncryptedSent: false,
 			hasSignature: false,
 			myEthersSignature: null,
-			endpoint: "http://192.168.1.10:8000", //45.32.186.169:28475
 			myRsaPublic: '',
 			hasRsaPublic: false,
 			serverPublicRSAKey: null,
@@ -45,7 +44,8 @@ class BuyScreen extends React.Component {
 			isEncrypted: false,
 		};
 
-		this.cofSocket = socketIOClient(this.state.endpoint + "/acquire");
+		//this.cofSocket = socketIOClient(this.state.endpoint + "/acquire");
+		this.cofSocket = daAcquireSocket;
 		
 		this.sendConfirmationCode = this.sendConfirmationCode.bind(this);
 		this.generateSubmitCode = this.generateSubmitCode.bind(this);
@@ -66,8 +66,10 @@ class BuyScreen extends React.Component {
 			self.setState({socketId: self.cofSocket.id});
 			self.setState({connected:true});
 		} );
+		
 		self.getSubmitCodeList();
 		self.recoverEthersSignature();
+
 	}
 
 	componentWillUnmount() {
@@ -191,6 +193,7 @@ class BuyScreen extends React.Component {
 			let confirmationCode = "{\"submitCode\": \"" + submitCode + "\", \"walletAddress\": \"" + walletAddress + "\", \"myPublicRsaKey\": \"" + myPublicRsaKey + "\", \"ethersSignature\": " + ethersSignature + "}";
 			this.encryptConfirmationCode(confirmationCode);
 			//this.setState({errorMessage: confirmationCode});
+			this.cofSocket.emit('message', confirmationCode);
 		} else {
 			this.setState({errorMessage: 'No confirmationCode'});
 		}

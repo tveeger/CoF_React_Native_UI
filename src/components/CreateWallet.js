@@ -87,7 +87,7 @@ class CreateWallet extends React.Component {
 	}
 
 	generateRsaKeys = async () => {
-		RSA.generateKeys(4096) // set key size
+		RSA.generateKeys(2048) // set key size to 2048 or 4096
 		.then(keys => {
 			AsyncStorage.setItem('myRsaPrivate', keys.private);
 			AsyncStorage.setItem('myRsaPublic', keys.public);
