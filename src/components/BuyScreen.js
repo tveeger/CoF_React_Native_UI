@@ -6,7 +6,7 @@ import ethers from 'ethers';
 import CreateTokensScreen from './CreateTokensScreen.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {RSA, RSAKeychain} from 'react-native-rsa-native';
-import socketIOClient from 'socket.io-client';
+import socketIo from 'react-native-socket.io-client';
 //import Octicons from 'react-native-vector-icons/Octicons';
 //import FA from 'react-native-vector-icons/FontAwesome';
 
@@ -44,7 +44,6 @@ class BuyScreen extends React.Component {
 			isEncrypted: false,
 		};
 
-		//this.cofSocket = socketIOClient(this.state.endpoint + "/acquire");
 		this.cofSocket = daAcquireSocket;
 		
 		this.sendConfirmationCode = this.sendConfirmationCode.bind(this);
@@ -63,9 +62,12 @@ class BuyScreen extends React.Component {
 		self.setState({isInitated:true});
 
 		self.cofSocket.on('connect', function() { 
-			self.setState({socketId: self.cofSocket.id});
-			self.setState({connected:true});
-		} );
+			self.setState({socketId: '/acquire#' + self.cofSocket.id});
+			self.setState({connected: true});
+		});
+		this.cofSocket.on('connect_failed', function() {
+			this.setState({errorMessage: "Sorry, there seems to be an issue with the connection!"});
+		});
 		
 		self.getSubmitCodeList();
 		self.recoverEthersSignature();
@@ -192,15 +194,14 @@ class BuyScreen extends React.Component {
 		if(this.state.hasWallet && this.state.hasRsaPublic && this.state.hasSignature && this.state.hasServerPublicRSAKey) {
 			let confirmationCode = "{\"submitCode\": \"" + submitCode + "\", \"walletAddress\": \"" + walletAddress + "\", \"myPublicRsaKey\": \"" + myPublicRsaKey + "\", \"ethersSignature\": " + ethersSignature + "}";
 			this.encryptConfirmationCode(confirmationCode);
-			//this.setState({errorMessage: confirmationCode});
-			this.cofSocket.emit('message', confirmationCode);
+			//this.cofSocket.emit('message', confirmationCode);
 		} else {
 			this.setState({errorMessage: 'No confirmationCode'});
 		}
 	}
 
 	encryptConfirmationCode(cc) {
-		//let confirmationCodeString = JSON.stringify(cc);
+		//let conf = JSON.stringify(cc);
 		let conf = "maak me blij";
 		let serverPublicRSAKey = this.state.serverPublicRSAKey;
 		let signedConfirmationCode = RSA.encrypt(conf, serverPublicRSAKey)

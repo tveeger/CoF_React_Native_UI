@@ -1,7 +1,9 @@
 //http://www.reactnativeexpress.com/asyncstorage
+//https://npm.taobao.org/package/react-native-socket.io-client
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, ScrollView, Button, TouchableHighlight, TextInput, FlatList, AsyncStorage } from 'react-native';
-import socketIOClient from 'socket.io-client';
+import { StyleSheet, Text, View, ScrollView, Button, TouchableHighlight, TextInput, FlatList, AsyncStorage, Modal } from 'react-native';
+import socketIo from 'react-native-socket.io-client';
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {RSA, RSAKeychain} from 'react-native-rsa-native';
 import ethers from 'ethers';
@@ -12,7 +14,6 @@ constructor(props) {
 
 	this.state = {
 		connected: false,
-		endpoint: "http://192.168.1.10:8000",
 		incoming: '',
 		incomingMessage: '',
 		inputMessssage: '',
@@ -29,36 +30,61 @@ constructor(props) {
 		myRsaPrivate: '',
 		myRsaPublic: '',
 		peerRsaPublic: '',
+		hasNickname: false,
 		socketId: '',
+		modalVisible: false,
+		contactModalVisible: false,
+		onlineUsers: null,
+		newName: '',
 	};
 	this.sendMessage = this.sendMessage.bind(this);
-	this.cofSocket = socketIOClient(this.state.endpoint + "/chat");
+	//this.cofSocket = daChatSocket; //zie connector.js
+	this.cofSocket = socketIo.connect('http://45.32.186.169:28475/chat');
+	//this.cofSocket = socketIOClient.connect('http://192.168.1.9:28475/chat');
+	//this.cofSocket = socketIo.connect('http://45.32.186.169:28475/chat', { jsonp: false, transports: ['websocket'] });
 }
 
 	componentWillMount() {
 		const self = this;
-		//example: /chat#KwIHnDgVqXSj4JLaAAAL
-		self.cofSocket.on('connect', function() { 
-			self.setState({socketId: self.cofSocket.id});
+		
+		self.cofSocket.on('connect', function() {
+			self.setState({socketId: '/chat#' + self.cofSocket.id});
 			self.setState({connected:true});
 		} );
+		
+		self.cofSocket.on('connect_error', function() {
+			self.setState({connected:false})
+		});
 		self.cofSocket.on('message', function(message) { self.handleIncommingMessage(message) } );
-		self.recoverEthersSignature();
+		self.cofSocket.on('users', function(users) { self.setState({onlineUsers: JSON.stringify(users)}) } );
+		
 	}
 
 	componentWillUnmount() {
 		var self = this;
-		self.cofSocket.on('disconnect', true);
+		self.cofSocket.emit('disconnect', self.state.newName);
 	}
 
 	handleIncommingMessage(message) {
 		const self = this;
+		//this.setState({incomingMessage: JSON.stringify(message)});
 		let posts = self.state.posts;
-		this.setState({incomingMessage: JSON.stringify(message)});
 		let postsAmount = posts.length + 1;
 		posts = self.state.posts.slice();
 		posts.push({'datetime': self.makeDate(), 'id': postsAmount.toString(), 'payload': message.data, 'row_style': 'left'});
 		self.setState({ posts: posts });
+	}
+
+	registerUser(user) {
+		const self = this;
+		self.cofSocket.emit('users', {'username': user, 'id': self.state.socketId});
+		this.setState({modalVisible: false});
+		this.setState({hasNickname: true});
+	}
+
+	selectContact(item) {
+		this.setState({inputSocketId: item});
+		this.toggleContactModal(false);
 	}
 
 	makeDate() {
@@ -70,7 +96,7 @@ constructor(props) {
 		return datetime;
 	}
 
-	recoverEthersSignature = async () => {
+/*	recoverEthersSignature = async () => {
 		const self = this;
 		await AsyncStorage.getItem('myEthersSignature')
 		.then( (value) => {
@@ -93,7 +119,7 @@ constructor(props) {
 		posts = self.state.posts.slice();
 		posts.push({'datetime': self.makeDate(), 'id': postsAmount.toString(), 'payload': 'Signature has been delivered', 'row_style': 'right'});
 		self.setState({ posts: posts });
-	}
+	}*/
 
 	sendMessage(message) {
 		if( this.state.connected ) {
@@ -109,8 +135,16 @@ constructor(props) {
 			posts.push({'datetime': this.makeDate(), 'id': postsAmount.toString(), 'payload': message, 'row_style': 'right'});
 			this.setState({ posts: posts });
 			this.setState({postsAmount: postsAmount});
-			this.setState({msg: ''});
+			this.setState({inputMessssage: ''});
 		}
+	}
+
+	toggleModal(visible) {
+		this.setState({ modalVisible: visible });
+	}
+
+	toggleContactModal(visible) {
+		this.setState({ contactModalVisible: visible });
 	}
 
 	setStyle(direction) {
@@ -122,6 +156,18 @@ constructor(props) {
 			backgroundColor: 'whitesmoke',
 			fontSize: 14,
 			textAlign: direction }
+	}
+
+	extractContactKey = (item, index) => index.toString();
+
+	renderContactItem = ({item}) => {
+		return (
+			<View style={styles.contact_list}>
+				<TouchableHighlight onPress = {() => {this.selectContact(item.id)}}>
+					<Text style={{color:'#CCC'}}>{item.username}</Text>
+				</TouchableHighlight>
+			</View>
+		)
 	}
 
 	extractKey = (item, index) => item.id;
@@ -136,30 +182,98 @@ constructor(props) {
 		return (
 			<ScrollView style={styles.container} stickyHeaderIndices={[0]}>
 				<View style={styles.container}>
+				
+					<Modal animationType = {"slide"} transparent = {false}
+						visible = {this.state.modalVisible}
+						onRequestClose = {() => { console.log("Modal has been closed.") } }>
+						<View style = {styles.modal}>
+							<Text style={styles.header_h4}>Register Your Nickname</Text>
+							<View style = {styles.textField}>
+								<Text style={styles.prompt}>You nickname is only for this session</Text>
+							</View>
+							<TextInput
+								style={styles.input}
+								underlineColorAndroid = "transparent"
+								placeholder = "Max. 80 characters"
+								autoCapitalize = "none"
+								autoFocus = {true}
+								selectable = {true}
+								selectTextOnFocus = {true}
+								maxLength = {80}
+								placeholderTextColor = "#A0B5C8"
+								onChangeText = {(newName) => this.setState({newName})}
+							/>
+							<Button 
+								title="submit" 
+								color="#BCB3A2" 
+								accessibilityLabel="submit"
+								onPress = { ()=> this.registerUser(this.state.newName)}
+							/>
+							<Text>{'\n'}</Text>
+							<View style = {styles.textField}>
+								<Text style={styles.prompt}>{'\n'}{this.state.modalMessage}{'\n'}</Text>
+							</View>
+							<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+								this.toggleModal(!this.state.modalVisible)}}>
+								<Text style = {styles.hyperLink}> Close</Text>
+							</TouchableHighlight>
+						</View>
+					</Modal>
+	
+					<Modal animationType = {"slide"} 
+						transparent = {false}
+						visible = {this.state.contactModalVisible}
+						onRequestClose = {() => {} }>
+						<View style = {styles.modal}>
+							<Text style={styles.header_h4}>My Contacts</Text>
+							<FlatList
+								numColumns={1}
+								data={JSON.parse(this.state.onlineUsers)}
+								renderItem={this.renderContactItem}
+								keyExtractor={this.extractContactKey}
+							/>
+							<Text>{'\n'}</Text>
+							
+							<TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+								this.toggleContactModal(!this.state.contactModalVisible)}}>
+								<Text style = {styles.hyperLink}> Close</Text>
+							</TouchableHighlight>
+						</View>
+					</Modal>
+
 					<Text style={styles.baseText}>
 						<Ionicons name={'ios-pulse'} size={26} style={styles.icon} />
 						<Text style={styles.header_h4}> CoF Chat Channel {'\n'}{'\n'}</Text>
-						<Text style={styles.prompt}>signature:</Text>
-						<Text>{this.state.hasSignature ? "true":"false"}</Text>
-						<Text style={styles.prompt}>, peer key:</Text>
-						<Text>{this.state.hasPeerPublicKey ? "true":"false"}</Text>
-						<Text style={styles.prompt}>, connected:</Text>
-						<Text>{this.state.connected ? "true":"false"}</Text>
+						<Text style={styles.prompt}>Nickname:</Text>
+						<Text>{this.state.newName}, {this.state.socketId}</Text>
+						<Text></Text>
 					</Text>
-					{this.state.hasSignature && <TouchableHighlight style={styles.smallGreyButton} onPress = {() => {
-						this.sendSignature()}}>
-						<Text style = {styles.hyperLink}> Send signature</Text>
-					</TouchableHighlight>}
 
-					{this.state.connected && <TextInput style = {styles.input}
+					<View style={{flexDirection:'row', width: window.width}}>
+						<View style={{flex:2}}>
+							{!this.state.hasNickname && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+								this.toggleModal(!this.state.modalVisible)}}>
+								<Text style = {styles.hyperLink}> Register </Text>
+							</TouchableHighlight>}
+						</View>
+						<View style={{flex:2}}>
+							{this.state.hasNickname && <TouchableHighlight style={styles.smallBlueButton} onPress = {() => {
+								this.toggleContactModal(!this.state.contactModalVisible)}}>
+								<Text style = {styles.hyperLink}> Find Person </Text>
+							</TouchableHighlight>}
+						</View>
+					</View>
+
+					{this.state.hasNickname && <TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "User ID"
 						placeholderTextColor = "#A0B5C8"
 						autoCapitalize = "none"
+						defaultValue = {this.state.inputSocketId}
 						onChangeText = {(text)=>{this.setState({inputSocketId:text})}}
 					/>}
 					
-					{this.state.connected && <TextInput style = {styles.input}
+					{this.state.hasNickname && <TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "your message"
 						placeholderTextColor = "#A0B5C8"
@@ -167,7 +281,7 @@ constructor(props) {
 						onChangeText = {(text)=>{this.setState({inputMessssage:text})}}
 						value = {this.state.inputMessssage}
 					/>}
-					{this.state.connected && <Button 
+					{this.state.hasNickname && <Button 
 					    title="submit" 
 					    color="#BCB3A2" 
 					    accessibilityLabel="submit"
@@ -177,7 +291,8 @@ constructor(props) {
 					  {this.connected && <Text style={styles.prompt}>, amount: </Text>}
 					  {this.connected && <Text>{this.state.postsAmount}</Text>}
 					</Text>
-				<Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
+					{!this.state.connected && <Text style={styles.errorText}>{'\n'}The chat socket is probably down.</Text>}
+					<Text style={styles.errorText}>{'\n'}{this.state.errorMessage}</Text>
 				</View>
 
 				<FlatList
@@ -194,71 +309,97 @@ constructor(props) {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 10,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingTop: 10,
-    backgroundColor: 'whitesmoke',
-  },
-  baseText: {
-    textAlign: 'left',
-    color: '#999999',
-    marginBottom: 5,
-  },
-  header_h4: {
-    color: '#2D4866',
-    fontSize: 20,
-    padding: 10,
-  },
-  input: {
-    height: 40, 
-    borderColor: '#D3C8B2', 
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    fontSize: 14,
-    marginBottom: 15,
-    color: '#999999',
-  },
-  postItem: {
-    paddingTop: 10,
-  },
-  left_row: {
-    padding: 15,
-    marginBottom: 5,
-    borderColor: '#D3C8B2',
-    borderWidth: 1,
-    backgroundColor: 'whitesmoke',
-    fontSize: 14,
-    color: '#2D4866',
-    textAlign: 'left',
-  },
-  right_row: {
-    padding: 15,
-    marginBottom: 5,
-    borderColor: '#D3C8B2',
-    borderWidth: 1,
-    backgroundColor: 'whitesmoke',
-    fontSize: 14,
-    color: '#2D4866',
-    textAlign: 'right',
-  },
-  prompt: {
-    color: '#BCB3A2',
-  },
-  icon: {
-    color: '#2D4866',
-    fontSize: 30,
-  },
-  errorText: {
-    marginTop: 10,
-    color: 'red'
-  },
-  hyperLink: {
+	container: {
+		marginTop: 10,
+		paddingLeft: 10,
+		paddingRight: 10,
+		paddingTop: 10,
+		backgroundColor: 'whitesmoke',
+	},
+	baseText: {
+		textAlign: 'left',
+		color: '#999999',
+		marginBottom: 5,
+	},
+	header_h4: {
+		color: '#2D4866',
+		fontSize: 20,
+		padding: 10,
+	},
+	input: {
+		height: 40, 
+		borderColor: '#D3C8B2', 
+		backgroundColor: '#FFF',
+		borderWidth: 1,
+		fontSize: 14,
+		marginBottom: 15,
+		color: '#999999',
+	},
+	postItem: {
+		paddingTop: 10,
+	},
+	left_row: {
+		padding: 15,
+		marginBottom: 5,
+		borderColor: '#D3C8B2',
+		borderWidth: 1,
+		backgroundColor: 'whitesmoke',
+		fontSize: 14,
+		color: '#2D4866',
+		textAlign: 'left',
+	},
+	right_row: {
+		padding: 15,
+		marginBottom: 5,
+		borderColor: '#D3C8B2',
+		borderWidth: 1,
+		backgroundColor: 'whitesmoke',
+		fontSize: 14,
+		color: '#2D4866',
+		textAlign: 'right',
+	},
+	prompt: {
 		color: '#BCB3A2',
+	},
+	icon: {
+		color: '#2D4866',
+		fontSize: 30,
+	},
+		errorText: {
+		marginTop: 10,
+		color: 'red'
+	},
+  	modal: {
+		flex: 1,
+		alignItems: 'center',
+		backgroundColor: 'whitesmoke',
+		paddingTop: 100
+	},
+  	hyperLink: {
+		color: 'whitesmoke',
 		fontSize: 16,
 		fontWeight: 'normal'
 	},
+	smallBlueButton: {
+		backgroundColor: '#8192A2',
+		padding: 4,
+		width: 200,
+		margin: 5,
+		borderRadius: 4,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	contact_list: {
+		marginLeft:10,
+		marginRight:10,
+		marginBottom:2,
+		paddingLeft:20,
+		paddingTop:10,
+		paddingBottom:10,
+		width:320,
+		borderRadius:4,
+		backgroundColor:'#8192A2'
+	}
 });
 
 export default SocketIo;

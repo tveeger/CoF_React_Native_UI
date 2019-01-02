@@ -4,6 +4,8 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
+import {RSA, RSAKeychain} from 'react-native-rsa-native';
+import socketIo from 'react-native-socket.io-client';
 
 class RedeemScreen extends React.Component {
   static navigationOptions = {
@@ -33,34 +35,28 @@ class RedeemScreen extends React.Component {
 		isSigned: false,
 		nonce: '',
 		redeemId: '',
+		serverPublicRSAKey: '',
+		hasServerPublicRSAKey: false,
 		};
 
-		this.socket = new WebSocket('ws://45.32.186.169:28475');
-		//this.socket = new WebSocket('ws://127.0.0.1:28475');
-		//this.socket = new WebSocket('ws://echo.websocket.org'); //test
-		this.socket.onopen = () => {
-			this.setState({connected:true})
-		};
-		this.socket.onmessage = (e) => {
-		    //console.log(e.data);
-			this.setState({incoming:e.data});
-		};
-		this.socket.onerror = (e) => {
-		    //console.log(e.message);
-			this.setState({errorMessage:e.message});
-		};
-		this.socket.onclose = (e) => {
-			this.setState({connected:false})
-			console.log(e.code, e.reason);
-		};
+		this.cofSocket = daRedeemSocket; //zie connector.js
 		this.sendRedeemEuros = this.sendRedeemEuros.bind(this);
 	}
 
 	componentWillMount() {
 		var self = this;
-		this.setState({walletAddress: wallet.address});
+		self.setState({walletAddress: wallet.address});
 		const tokenAddress = daTokenAddress;
 		self.setState({tokenAddress: tokenAddress});
+
+		self.cofSocket.on('connect', function() { 
+			self.setState({socketId: '/redeem#' + self.cofSocket.id});
+			self.setState({connected: true});
+		});
+		self.cofSocket.on('connect_failed', function() {
+			self.setState({errorMessage: "Sorry, there seems to be an issue with the connection!"});
+		});
+		
 		self.getWalletInfo();
 	}
 
@@ -123,8 +119,16 @@ class RedeemScreen extends React.Component {
 
 	}
 
-	sendWebsocketMessage() {
-		
+	recoverServerPublicRSAKey = async () => {
+		const self = this;
+		return fetch(serverPublicRSAKey) //see connector.js
+		.then((response) => response.json()) 
+		.then((responseJson) => { 
+			self.setState({serverPublicRSAKey: responseJson.result});
+			this.setState({hasServerPublicRSAKey: true});
+		})
+		.catch((error) => { this.setState({errorMessage: 'Public key not found: ' + error});
+		}); 
 	}
 
 	sendRedeemEuros() {
@@ -157,21 +161,27 @@ class RedeemScreen extends React.Component {
 
 			let signedTransaction = wallet.sign(tx);
 			self.setState({isSigned: true});
-			self.setState({infoMessage: "Just a minute. Your transaction will be mined now..."});
-			wallet.provider.sendTransaction(signedTransaction).then(function(hash) {
-				wallet.provider.waitForTransaction(hash).then(function(transaction) {
-					self.socket.send(signedTransaction); //TODO
-					self.setState({infoMessage: "Your DET tokens are redeemed."});
-					self.setState({isSigned: false});
-					self.setState({isTransferSuccess: true});
-					self.setState({hash: hash.toString()});
-					self.getWalletInfo();
-					
-				});
-			});
-			//TODO: let redeemInfo (address, transferAmount, IBAN) = RSA.encrypt(serverRSAPublicKey)
-			//TODO: socket.send(redeeminfo)
+			//self.sendTransaction(signedTransaction);
+			self.sendSignatureMessage(signedTransaction);
 		}
+	}
+
+	sendTransaction(st) {
+		self.setState({infoMessage: "Just a minute. Your transaction will be mined now..."});
+		wallet.provider.sendTransaction(st).then(function(hash) {
+			wallet.provider.waitForTransaction(hash).then(function(transaction) {
+				self.setState({infoMessage: "Your DET tokens are redeemed."});
+				self.sendSignatureMessage(st);
+				self.setState({isSigned: false});
+				self.setState({isTransferSuccess: true});
+				self.setState({hash: hash.toString()});
+				self.getWalletInfo();
+			});
+		});
+	}
+
+	sendSignatureMessage(st) {
+		this.cofSocket.emit('message', st);
 	}
 
   	render() {
@@ -216,7 +226,6 @@ class RedeemScreen extends React.Component {
 				{this.state.isTransferSuccess && <Text style={styles.infoText}>{'\n'}Transaction hash: {this.state.hash}</Text>}
 				<Text style={styles.infoText}>{'\n'}{this.state.infoMessage}</Text>
 				<Text style={styles.errorText}>{this.state.message}</Text>
-				
 			</ScrollView>
 		);
     }
