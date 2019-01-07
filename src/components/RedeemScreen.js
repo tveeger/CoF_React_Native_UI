@@ -4,7 +4,7 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
-import {RSA, RSAKeychain} from 'react-native-rsa-native';
+//import {RSA, RSAKeychain} from 'react-native-rsa-native';
 import socketIo from 'react-native-socket.io-client';
 
 class RedeemScreen extends React.Component {
@@ -17,7 +17,7 @@ class RedeemScreen extends React.Component {
 
 	this.state = {
 		walletAddress: '',
-		tokenAddress: '',
+		hasWallet: false,
 		tokenSymbol: '',
 		tokenBalance: 0,
 		transferAmount: 0,
@@ -35,19 +35,18 @@ class RedeemScreen extends React.Component {
 		isSigned: false,
 		nonce: '',
 		redeemId: '',
-		serverPublicRSAKey: '',
-		hasServerPublicRSAKey: false,
 		};
 
 		this.cofSocket = daRedeemSocket; //zie connector.js
-		this.sendRedeemEuros = this.sendRedeemEuros.bind(this);
+		this.signRedeemTransaction = this.signRedeemTransaction.bind(this);
 	}
 
 	componentWillMount() {
 		var self = this;
-		self.setState({walletAddress: wallet.address});
-		const tokenAddress = daTokenAddress;
-		self.setState({tokenAddress: tokenAddress});
+		wallet.provider = etherscanProvider;
+		const walletAddress = wallet.address;
+		self.setState({walletAddress: walletAddress});
+		self.setState({hasWallet: true});
 
 		self.cofSocket.on('connect', function() { 
 			self.setState({socketId: '/redeem#' + self.cofSocket.id});
@@ -119,19 +118,7 @@ class RedeemScreen extends React.Component {
 
 	}
 
-	recoverServerPublicRSAKey = async () => {
-		const self = this;
-		return fetch(serverPublicRSAKey) //see connector.js
-		.then((response) => response.json()) 
-		.then((responseJson) => { 
-			self.setState({serverPublicRSAKey: responseJson.result});
-			this.setState({hasServerPublicRSAKey: true});
-		})
-		.catch((error) => { this.setState({errorMessage: 'Public key not found: ' + error});
-		}); 
-	}
-
-	sendRedeemEuros() {
+	signRedeemTransaction() {
 		const self = this;
 		let tokenBalance = self.state.tokenBalance;
 		let transferAmount = self.state.transferAmount;
@@ -161,27 +148,49 @@ class RedeemScreen extends React.Component {
 
 			let signedTransaction = wallet.sign(tx);
 			self.setState({isSigned: true});
-			//self.sendTransaction(signedTransaction);
-			self.sendSignatureMessage(signedTransaction);
+			self.sendTransaction(signedTransaction);
+			self.sendTransactionCode();
 		}
 	}
 
 	sendTransaction(st) {
+		const self = this;
 		self.setState({infoMessage: "Just a minute. Your transaction will be mined now..."});
 		wallet.provider.sendTransaction(st).then(function(hash) {
 			wallet.provider.waitForTransaction(hash).then(function(transaction) {
-				self.setState({infoMessage: "Your DET tokens are redeemed."});
-				self.sendSignatureMessage(st);
+				self.generateEthersSignature(transaction);
 				self.setState({isSigned: false});
 				self.setState({isTransferSuccess: true});
 				self.setState({hash: hash.toString()});
-				self.getWalletInfo();
 			});
 		});
 	}
 
-	sendSignatureMessage(st) {
+	generateEthersSignature = async (transactionHash) => {
+		if(this.state.hasWallet) {
+			const SigningKey = ethers._SigningKey;
+			const privateKey = wallet.privateKey;
+			let signingKey = new ethers.SigningKey(privateKey);
+			let messageBytes = ethers.utils.toUtf8Bytes(transactionHash);
+			let messageDigest = ethers.utils.keccak256(messageBytes);
+			let signature = signingKey.signDigest(messageDigest);
+			signature = await JSON.stringify(signature);
+			this.setState({hasSignature: true});
+			this.sendSignature(signature);
+		} else {
+			this.setState({errorMessage: 'No wallet. Please create or recover your wallet first.'});
+		}
+	}
+
+	sendSignature(st) {
 		this.cofSocket.emit('message', st);
+		this.setState({infoMessage: "Your DET tokens are processed."});
+		this.getWalletInfo();
+	}
+
+	sendTransactionCode() {
+		let transactionCode = "{\"redeemId\": \"" + this.state.redeemId + "\", \"transferAmount\": " + this.state.transferAmount + ", \"iban\": \"" + this.state.iban + "\"}";
+		this.cofSocket.emit('message', transactionCode);
 	}
 
   	render() {
@@ -220,12 +229,11 @@ class RedeemScreen extends React.Component {
 				{!this.state.isDetsDestroyed && <Button
 					title="Submit"
 					color="#BCB3A2"
-					onPress={() => { this.sendRedeemEuros()} } 
+					onPress={() => { this.signRedeemTransaction()} } 
 				/>}
 				{this.state.isSigned && <ActivityIndicator size="large" color="#8192A2" />}
-				{this.state.isTransferSuccess && <Text style={styles.infoText}>{'\n'}Transaction hash: {this.state.hash}</Text>}
-				<Text style={styles.infoText}>{'\n'}{this.state.infoMessage}</Text>
-				<Text style={styles.errorText}>{this.state.message}</Text>
+				<Text style={styles.prompt}>{'\n'}{this.state.infoMessage}</Text>
+				<Text style={styles.errorText}>{'\n'}{this.state.message}</Text>
 			</ScrollView>
 		);
     }

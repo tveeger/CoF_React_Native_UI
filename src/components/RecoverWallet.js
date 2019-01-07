@@ -25,7 +25,6 @@ class RecoverWalletForm extends React.Component {
 			hasWallet: false,
 			walletSaved: false,
 			isBusy: false,
-			hasSignature: false,
 			createdKeys: false,
 		};
 	}
@@ -60,26 +59,11 @@ class RecoverWalletForm extends React.Component {
 
 			this.setState({walletSaved: true});
 			this.setState({isBusy: false});
-
-			this.generateEthersSignature();
 			this.generateRsaKeys();
 		} else {
 			this.setState({message: "Invalid mnemonic"});
 			this.setState({isBusy: false});
 		}
-	}
-
-	generateEthersSignature = async () => {
-		let hasSigningKey = this.state.signingKey;
-		const SigningKey = ethers._SigningKey;
-		const privateKey = wallet.privateKey;
-		let signingKey = new ethers.SigningKey(privateKey);
-		let message = 'Chains of Freedom';
-		let messageBytes = ethers.utils.toUtf8Bytes(message);
-		let messageDigest = ethers.utils.keccak256(messageBytes);
-		let signature = signingKey.signDigest(messageDigest);
-		AsyncStorage.setItem('myEthersSignature', JSON.stringify(signature));
-		this.setState({hasSignature: true});
 	}
 
 	generateRsaKeys = async () => {
@@ -123,8 +107,6 @@ class RecoverWalletForm extends React.Component {
 			<Text style={styles.baseText}>
 				{this.state.walletSaved && <Text style={styles.prompt}>Mnemonic is legit: </Text>}
 				{this.state.walletSaved && <Text>{this.state.walletSaved.toString()}{'\n'}</Text>}
-				{this.state.walletSaved && <Text style={styles.prompt}>Signature saved: </Text>}
-				{this.state.walletSaved && <Text>{this.state.hasSignature.toString()}{'\n'}</Text>}
 				{this.state.walletSaved && <Text style={styles.prompt}>Keys saved: </Text>}
 				{this.state.walletSaved && <Text>{this.state.createdKeys.toString()}{'\n'}</Text>}
 				<Text style={styles.errorText}>{this.state.message}{this.state.errorMessage}{'\n'}</Text>

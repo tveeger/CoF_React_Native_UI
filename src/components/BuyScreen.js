@@ -2,13 +2,10 @@ import React, { Component } from 'react';
 import { Button, Image, View, ScrollView, Text, TextInput, StyleSheet, AsyncStorage, RefreshControl } from 'react-native';
 import Connector from './Connector.js';
 import ethers from 'ethers';
-//import metacoin_artifacts from '../contracts/BirdlandToken.json';
 import CreateTokensScreen from './CreateTokensScreen.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {RSA, RSAKeychain} from 'react-native-rsa-native';
 import socketIo from 'react-native-socket.io-client';
-//import Octicons from 'react-native-vector-icons/Octicons';
-//import FA from 'react-native-vector-icons/FontAwesome';
 
 class BuyScreen extends React.Component {
 	static navigationOptions = {
@@ -21,33 +18,21 @@ class BuyScreen extends React.Component {
 		this.state = {
 			isSubmitcodeCreated: false,
 			isInitated: false,
-			connected: false,
 			refreshing: false,
 			submitMessage: '',
 			hasWallet: false,
 			walletAddress: '',
-			tokenAddress: '',
 			submitCode: '',
-			confirmMessage: '',
-			incoming: '',
 			errorMessage: '',
-			testCode: 'test12345',
 			submitCodeList: null,
-			signature: null,
-			isEncryptedSent: false,
+			isSignatureSent: false,
 			hasSignature: false,
-			myEthersSignature: null,
-			myRsaPublic: '',
-			hasRsaPublic: false,
-			serverPublicRSAKey: null,
-			hasServerPublicRSAKey: false,
-			isEncrypted: false,
+			//serverPublicRSAKey: null,
+			//hasServerPublicRSAKey: false,
+			//isEncrypted: false,
 		};
 
 		this.cofSocket = daAcquireSocket;
-		
-		this.sendConfirmationCode = this.sendConfirmationCode.bind(this);
-		this.generateSubmitCode = this.generateSubmitCode.bind(this);
 	}
 
 	componentWillMount() {
@@ -55,32 +40,25 @@ class BuyScreen extends React.Component {
 		wallet.provider = etherscanProvider;
 		const walletAddress = wallet.address;
 		self.setState({walletAddress: walletAddress});
-		self.setState({hasWallet: true})
-		
-		const tokenAddress = daTokenAddress;
-		self.setState({tokenAddress: tokenAddress});
+		self.setState({hasWallet: true});
 		self.setState({isInitated:true});
 
 		self.cofSocket.on('connect', function() { 
 			self.setState({socketId: '/acquire#' + self.cofSocket.id});
-			self.setState({connected: true});
 		});
 		this.cofSocket.on('connect_failed', function() {
 			this.setState({errorMessage: "Sorry, there seems to be an issue with the connection!"});
 		});
 		
 		self.getSubmitCodeList();
-		self.recoverEthersSignature();
-
 	}
 
 	componentWillUnmount() {
 		this.setState({isSubmitcodeCreated: false});
 		this.setState({isInitated: false});
-		this.setState({isEncryptedSent: false});
-		this.setState({hasRsaPublic: false});
+		this.setState({isSignatureSent: false});
 		this.setState({hasWallet: false});
-		this.setState({myRsaPublic: ''});
+		this.setState({submitMessage: ''});
 	}
 
 	onRefresh() {
@@ -104,75 +82,7 @@ class BuyScreen extends React.Component {
 		}
 	}
 
-	generateSubmitCode() {
-			let submitCode = Math.random().toString(16).slice(2);
-			
-			this.setState({submitCode: submitCode});
-			this.setState({isSubmitcodeCreated: true});
-			//this.assableConfirmationCode(submitCode);
-
-			this.setState({isInitated: false});
-			this.setState({submitMessage: 'Now make a bank transfer in Euros to IBAN NL52BUNQ2025415389 and dont forget to add the request code in the comment area.'});
-			//this.assableConfirmationCode(submitCode);
-			this.saveSubmitCodeList(submitCode);
-	}
- 
-	tst = async (sc) => {
-		let submitCode = sc;
-		this.setState({errorMessage: 'submitCode: ' + submitCode});
-	}
-
-	saveSubmitCodeList = async (submitCode) => {
-		try {
-			let submitCodeList = this.state.submitCodeList;
-			if(submitCodeList !== null) {
-				submitCodeList = this.state.submitCodeList.concat({id: submitCode}); //add code to array
-				AsyncStorage.setItem('submitCodeList', JSON.stringify(submitCodeList)); //write to async storage
-				this.setState({submitCodeList: submitCodeList}); //write to status
-				this.assableConfirmationCode(submitCode);
-			} else {
-				submitCodeList = [{id: submitCode}];
-				AsyncStorage.setItem('submitCodeList', JSON.stringify(submitCodeList)); //write to async storage
-				this.setState({submitCodeList: submitCodeList}); //write to status
-				this.assableConfirmationCode(submitCode);
-			}
-		}
-		catch(error) {
-			this.setState({errorMessage: 'SubmitCodeList: ' + error});
-		}
-	}
-
-	recoverEthersSignature = async () => {
-		const self = this;
-		await AsyncStorage.getItem('myEthersSignature')
-		.then( (value) => {
-			self.setState({myEthersSignature: value});
-			self.setState({hasSignature: true});
-		})
-		.then( () => {
-			this.recoverRsaPublic();
-		})
-		.catch((error) => { 
-			self.setState({errorMessage: 'myPrivateKey: ' + error}); 
-		});
-	}
-
-	recoverRsaPublic = async () => {
-		const self = this;
-		await AsyncStorage.getItem('myRsaPublic')
-		.then( (value) => {
-			self.setState({myRsaPublic: value});
-			self.setState({hasRsaPublic: true});
-		})
-		.then( () => {
-			this.recoverServerPublicRSAKey();
-		})
-		.catch((error) => { 
-			self.setState({errorMessage: 'myPublicKey: ' + error}); 
-		});
-	}
-
-	recoverServerPublicRSAKey = async () => {
+	/*recoverServerPublicRSAKey = async () => {
 		const self = this;
 		return fetch(serverPublicRSAKey) //see connector.js
 		.then((response) => response.json()) 
@@ -182,45 +92,71 @@ class BuyScreen extends React.Component {
 		})
 		.catch((error) => { this.setState({errorMessage: 'Public key not found: ' + error});
 		}); 
+	}*/
+
+	generateSubmitCode() {
+		let submitCode = Math.random().toString(16).slice(2);
+		this.setState({submitCode: submitCode});
+		this.setState({isSubmitcodeCreated: true});
+		this.setState({isInitated: false});
+		this.setState({submitMessage: 'Now make a bank transfer in Euros to IBAN NL52BUNQ2025415389 and dont forget to add the request code in the comment area.'});
+		this.saveSubmitCodeList(submitCode);
 	}
 
-	assableConfirmationCode(sc) {
-		//let submitCode = this.state.submitCode;
-		let submitCode = sc;
-		let walletAddress = this.state.walletAddress;
-		let myPublicRsaKey = this.state.myRsaPublic;
-		let ethersSignature = this.state.myEthersSignature;
-
-		if(this.state.hasWallet && this.state.hasRsaPublic && this.state.hasSignature && this.state.hasServerPublicRSAKey) {
-			let confirmationCode = "{\"submitCode\": \"" + submitCode + "\", \"walletAddress\": \"" + walletAddress + "\", \"myPublicRsaKey\": \"" + myPublicRsaKey + "\", \"ethersSignature\": " + ethersSignature + "}";
-			this.encryptConfirmationCode(confirmationCode);
-			//this.cofSocket.emit('message', confirmationCode);
-		} else {
-			this.setState({errorMessage: 'No confirmationCode'});
+	saveSubmitCodeList = async (submitCode) => {
+		try {
+			let submitCodeList = this.state.submitCodeList;
+			if(submitCodeList !== null) {
+				submitCodeList = this.state.submitCodeList.concat({id: submitCode}); //add code to array
+				AsyncStorage.setItem('submitCodeList', JSON.stringify(submitCodeList)); //write to async storage
+				this.setState({submitCodeList: submitCodeList}); //write to status
+				this.generateEthersSignature(submitCode);
+			} else {
+				submitCodeList = [{id: submitCode}];
+				AsyncStorage.setItem('submitCodeList', JSON.stringify(submitCodeList)); //write to async storage
+				this.setState({submitCodeList: submitCodeList}); //write to status
+				this.generateEthersSignature(submitCode);
+			}
+		}
+		catch(error) {
+			this.setState({errorMessage: 'SubmitCodeList: ' + error});
 		}
 	}
 
-	encryptConfirmationCode(cc) {
-		//let conf = JSON.stringify(cc);
-		let conf = "maak me blij";
+	/*encryptSubmitCode(sc) {
 		let serverPublicRSAKey = this.state.serverPublicRSAKey;
-		let signedConfirmationCode = RSA.encrypt(conf, serverPublicRSAKey)
+		let signedConfirmationCode = RSA.encrypt(sc, serverPublicRSAKey)
 		.then(encodedMessage => {
 			this.setState({isEncrypted: true});
-			//this.setState({errorMessage: encodedMessage});
-			this.sendConfirmationCode(encodedMessage);
+			this.generateEthersSignature(encodedMessage);
 		})
 		.catch((error) => { this.setState({errorMessage: error}); 
 		});
-	}
+	} */
 
-	sendConfirmationCode(em) {
-		this.cofSocket.emit('message', em);
-		this.setState({isEncryptedSent: true});
+	generateEthersSignature = async (submitCode) => {
+		if(this.state.hasWallet) {
+			const SigningKey = ethers._SigningKey;
+			const privateKey = wallet.privateKey;
+			let signingKey = new ethers.SigningKey(privateKey);
+			let messageBytes = ethers.utils.toUtf8Bytes(submitCode);
+			let messageDigest = ethers.utils.keccak256(messageBytes);
+			let signature = signingKey.signDigest(messageDigest);
+			signature = await JSON.stringify(signature);
+			this.setState({hasSignature: true});
+			this.sendSignature(signature);
+		} else {
+			this.setState({errorMessage: 'No wallet. Please create or recover your wallet first.'});
+		}
+	}
+	
+	sendSignature(sig) {
+		this.cofSocket.emit('message', sig);
+		this.setState({isSignatureSent: true});
 	}
 
 	render() {
-		const {coinbase, tokenAddress } = this.props;
+		//const {coinbase, tokenAddress } = this.props;
 		return (
 			<ScrollView style={styles.container} refreshControl={
 			<RefreshControl
@@ -233,7 +169,7 @@ class BuyScreen extends React.Component {
 						<Ionicons name={'ios-flask'} size={26} style={styles.icon} />
 						<Text style={styles.header_h4}> 1. Generate request code {'\n'}</Text>
 						{this.state.isInitated && <Text style={styles.prompt}>Click this one to get your DET request code.{'\n'}</Text>}
-						<Text style={styles.prompt}>hasPublicRSAKey: {this.state.hasRsaPublic.toString()}, hasSignature: {this.state.hasSignature.toString()}, serverPublicKey: {this.state.hasServerPublicRSAKey.toString()}, submitCode: {this.state.isSubmitcodeCreated.toString()}, encrypted: {this.state.isEncrypted.toString()}}</Text>
+						<Text style={styles.prompt}>hasSignature: {this.state.hasSignature.toString()}</Text>
 					</Text>
 
 					{this.state.isInitated && <Button 
@@ -246,9 +182,9 @@ class BuyScreen extends React.Component {
 				</View>
 				{!this.state.isSubmitcodeCreated && <CreateTokensScreen newReceiptId={JSON.stringify(this.state.submitCodeList)} />}
 				<Text style={styles.baseText}>
-					{this.state.isEncryptedSent && <Text style={styles.prompt}>Your code has been sent to server.{'\n'}</Text>}
 					{this.state.isSubmitcodeCreated && <Text>{this.state.submitMessage} {this.state.submitCode}{'\n'}</Text>}
 					<Text style={styles.errorText}>{this.state.errorMessage}{'\n'}</Text>
+					{this.state.isSignatureSent && <Text style={styles.prompt}>Your code has been sent to server.{'\n'}</Text>}
 					<Text>{'\n'}</Text>
 				</Text>
 			</ScrollView>

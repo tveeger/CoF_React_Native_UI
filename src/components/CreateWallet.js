@@ -68,22 +68,9 @@ class CreateWallet extends React.Component {
 			self.setState({walletSaved: true});
 			self.setState({isBusy: false});
 			self.generateRsaKeys();
-			self.generateEthersSignature();
 		} else {
 			self.setState({message: "Could not save " + newMnemonic});
 		}
-	}
-
-	generateEthersSignature = async () => {
-		let hasSigningKey = this.state.signingKey;
-		const SigningKey = ethers._SigningKey;
-		const privateKey = wallet.privateKey;
-		let signingKey = new ethers.SigningKey(privateKey);
-		let message = 'Chains of Freedom';
-		let messageBytes = ethers.utils.toUtf8Bytes(message);
-		let messageDigest = ethers.utils.keccak256(messageBytes);
-		let signature = signingKey.signDigest(messageDigest);
-		AsyncStorage.setItem('myEthersSignature', JSON.stringify(signature));
 	}
 
 	generateRsaKeys = async () => {
