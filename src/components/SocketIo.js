@@ -57,13 +57,49 @@ constructor(props) {
 		});
 		self.cofSocket.on('message', function(message) { self.handleIncommingMessage(message) } );
 		self.cofSocket.on('users', function(users) { self.setState({onlineUsers: JSON.stringify(users)}) } );
-		
+		//self.getMyRsaPrivate();
+		//self.getMyRsaPublic();
 	}
 
 	componentWillUnmount() {
 		var self = this;
 		self.cofSocket.emit('disconnect', self.state.newName);
 	}
+
+	/*getMyRsaPublic = async () => {
+		try {
+			await AsyncStorage.getItem('myRsaPublic')
+			.then( (value) => {
+				if (value !== null) {
+					this.setState({myRsaPublic: value})
+				}
+			})
+		}
+		catch(error) {
+			this.setState({errorMessage: 'myRsaPublic: ' + error});
+		}
+	}
+
+	getMyRsaPrivate = async () => {
+		try {
+			await AsyncStorage.getItem('myRsaPrivate')
+			.then( (value) => {
+				if (value !== null) {
+					this.setState({myRsaPrivate: value})
+				}
+			})
+		}
+		catch(error) {
+			this.setState({errorMessage: 'myRsaPrivate: ' + error});
+		}
+	}
+
+	sendMyRsaPublic() {
+		let inputSocketId = this.state.inputSocketId;
+		const keys = this.state.myRsaPublic;
+		let messageObject = {'user': inputSocketId, 'data': keys};
+		this.cofSocket.emit('message', messageObject);
+	}*/
 
 	handleIncommingMessage(message) {
 		const self = this;
@@ -124,7 +160,6 @@ constructor(props) {
 	sendMessage(message) {
 		if( this.state.connected ) {
 			let inputSocketId = this.state.inputSocketId;
-			//let inputSocketId = this.state.socketId;
 			let inputMessssage = this.state.inputMessssage;
 			let messageObject = {'user': inputSocketId, 'data': inputMessssage};
 			this.cofSocket.emit('message', messageObject);
@@ -287,6 +322,7 @@ constructor(props) {
 					    accessibilityLabel="submit"
 					    onPress = { ()=> this.sendMessage(this.state.inputMessssage)}
 					/>}
+
 					<Text style={styles.baseText}>
 					  {this.connected && <Text style={styles.prompt}>, amount: </Text>}
 					  {this.connected && <Text>{this.state.postsAmount}</Text>}

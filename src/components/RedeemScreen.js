@@ -4,7 +4,7 @@ import ethers from 'ethers';
 import Connector from './Connector.js';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import metacoin_artifacts from '../contracts/EntboxContract.json';
-//import {RSA, RSAKeychain} from 'react-native-rsa-native';
+import {RSA} from 'react-native-rsa-native';
 import socketIo from 'react-native-socket.io-client';
 
 class RedeemScreen extends React.Component {
@@ -35,6 +35,8 @@ class RedeemScreen extends React.Component {
 		isSigned: false,
 		nonce: '',
 		redeemId: '',
+		serverPublicRSAKey: '',
+		hasServerPublicKey: false,
 		};
 
 		this.cofSocket = daRedeemSocket; //zie connector.js
@@ -57,6 +59,7 @@ class RedeemScreen extends React.Component {
 		});
 		
 		self.getWalletInfo();
+		self.getServerPublicKey();
 	}
 
 	onRefresh() {
@@ -64,6 +67,20 @@ class RedeemScreen extends React.Component {
 		this.getWalletInfo().then(() => {
 			this.setState({refreshing: false});
 		});
+	}
+
+	getServerPublicKey() {
+		var self = this;
+		return fetch(serverPublicRSAKey) //see connector.js
+		.then((response) => response.json()) 
+		.then((responseJson) => { 
+			self.setState({serverPublicRSAKey: responseJson.result})
+		})
+		.then(() => {
+			this.setState({hasServerPublicKey: true})
+		})
+		.catch((error) => { this.setState({errorMessage: 'Public key not found: ' + error});
+		}); 
 	}
 
 	getWalletInfo = async () => {
@@ -118,8 +135,16 @@ class RedeemScreen extends React.Component {
 
 	}
 
-	signRedeemTransaction() {
+	generateRedeemId() {
+		let redeemId = Math.random().toString(16).slice(2);
+		this.setState({redeemId: redeemId});
+		return redeemId;
+	}
+
+	signRedeemTransaction = async () => {
 		const self = this;
+		self.setState({isSigned: true});
+		let redeemId = self.generateRedeemId();
 		let tokenBalance = self.state.tokenBalance;
 		let transferAmount = self.state.transferAmount;
 		let checkedAmount = self.checkBalance(self.state.transferAmount);
@@ -131,8 +156,6 @@ class RedeemScreen extends React.Component {
 			wallet.provider = etherscanProvider;
 			var iface = new ethers.Interface(metacoin_artifacts);
 			let nonce = self.state.nonce;
-			let redeemId = Math.random().toString(16).slice(2);
-			self.setState({redeemId: redeemId});
 
 			let destroyIface = iface.functions.destroyDets(redeemId, transferAmountBN, iban);
 
@@ -147,13 +170,13 @@ class RedeemScreen extends React.Component {
 			}
 
 			let signedTransaction = wallet.sign(tx);
-			self.setState({isSigned: true});
-			self.sendTransaction(signedTransaction);
-			self.sendTransactionCode();
+			
+			self.sendTransaction(signedTransaction, redeemId);
+			//self.encrypt(redeemId);
 		}
 	}
 
-	sendTransaction(st) {
+	sendTransaction(st, redeemId) {
 		const self = this;
 		self.setState({infoMessage: "Just a minute. Your transaction will be mined now..."});
 		wallet.provider.sendTransaction(st).then(function(hash) {
@@ -161,7 +184,9 @@ class RedeemScreen extends React.Component {
 				self.generateEthersSignature(transaction);
 				self.setState({isSigned: false});
 				self.setState({isTransferSuccess: true});
-				self.setState({hash: hash.toString()});
+				self.setState({hash: JSON.stringify(transaction)});
+				//self.sendTransactionCode();
+				self.encrypt(redeemId);
 			});
 		});
 	}
@@ -188,8 +213,22 @@ class RedeemScreen extends React.Component {
 		this.getWalletInfo();
 	}
 
-	sendTransactionCode() {
-		let transactionCode = "{\"redeemId\": \"" + this.state.redeemId + "\", \"transferAmount\": " + this.state.transferAmount + ", \"iban\": \"" + this.state.iban + "\"}";
+	encrypt = async (id) => {
+		//uses PKCS1 padding scheme
+		let publicKey = this.state.serverPublicRSAKey;
+		let transactionCode = "{redeemId: \"" + id + "\", transferAmount: " + this.state.transferAmount + ", iban: \"" + this.state.iban + "\"}";
+		RSA.encrypt(transactionCode, publicKey) //padding scheme: Pkcs1
+		.then(em => {
+			this.setState({encryptedMessage: em});
+			this.setState({isEncrypted: true});
+			this.sendTransactionCode(em);
+		})
+		.catch((error) => { this.setState({errorMessage: error}); 
+		});
+	}
+
+	sendTransactionCode(transactionCode) {
+		this.setState({isSigned: false});
 		this.cofSocket.emit('message', transactionCode);
 	}
 
@@ -231,9 +270,10 @@ class RedeemScreen extends React.Component {
 					color="#BCB3A2"
 					onPress={() => { this.signRedeemTransaction()} } 
 				/>}
-				{this.state.isSigned && <ActivityIndicator size="large" color="#8192A2" />}
 				<Text style={styles.prompt}>{'\n'}{this.state.infoMessage}</Text>
 				<Text style={styles.errorText}>{'\n'}{this.state.message}</Text>
+				<Text>{'\n'}</Text>
+				{this.state.isSigned && <ActivityIndicator size="large" color="#8192A2" />}
 			</ScrollView>
 		);
     }
